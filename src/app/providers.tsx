@@ -1,0 +1,176 @@
+'use client';
+
+import { WagmiProvider, createConfig, http } from 'wagmi';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { polygon } from "wagmi/chains";
+import { getDefaultConfig } from "connectkit";
+import { injected, walletConnect, metaMask, coinbaseWallet } from '@wagmi/connectors';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { BackgroundProvider } from '@/components/ui/background-provider';
+import { BrowserExtensionHandler } from '@/components/BrowserExtensionHandler';
+import { WalletErrorBoundary } from '@/components/WalletErrorBoundary';
+import { initializeErrorHandling } from '../../lib/error-suppression';
+import { enhanceMetaMaskStability } from '../../lib/metamask-stability';
+import { AuthProvider } from '@/contexts/AuthContext';
+
+// Optimized Wagmi configuration for LuxPlay (Play Hub v2)
+const config = createConfig(
+  getDefaultConfig({
+    chains: [polygon],
+    transports: {
+      [polygon.id]: http(process.env.NEXT_PUBLIC_RPC_URL!, {
+        timeout: 20000, // 20 second timeout
+        retryCount: 3,
+        retryDelay: 1000,
+      }),
+    },
+    walletConnectProjectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!,
+    appName: "LuxPlay",
+    appDescription: "LuxPlay DeFi Platform",
+    appUrl: "https://luxplay.io",
+    appIcon: "https://luxplay.io/logo.png",
+    // Enhanced connection options for stability
+    ssr: false,
+    batch: {
+      multicall: {
+        batchSize: 100,
+        wait: 16,
+      },
+    },
+  })
+);
+
+// Optimized Query client for Play Hub v2
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30 * 1000, // 30 seconds for better UX
+      gcTime: 5 * 60 * 1000, // 5 minutes cache (renamed from cacheTime)
+      retry: (failureCount, error: any) => {
+        // Enhanced retry logic for different error types
+        if (failureCount < 3) {
+          // Retry network errors
+          if (error?.message?.includes('network') || 
+              error?.message?.includes('fetch') ||
+              error?.message?.includes('timeout') ||
+              error?.code === 4100 || // MetaMask authorization errors
+              error?.code === -32002) { // MetaMask pending request
+            return true;
+          }
+        }
+        return false;
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+      refetchOnMount: true
+    },
+    mutations: {
+      retry: (failureCount, error: any) => {
+        // Retry MetaMask connection issues once
+        if (failureCount < 1 && (
+          error?.code === 4100 || // Authorization error
+          error?.code === -32002 || // Pending request
+          error?.message?.includes('User rejected')
+        )) {
+          return true;
+        }
+        return false;
+      },
+      retryDelay: 2000
+    }
+  },
+});
+
+// LUXPLAY Dark Mode Only Configuration
+const ThemeContext = createContext<{ theme: 'dark' } | undefined>(undefined);
+
+export const useTheme = () => {
+  const context = useContext(ThemeContext);
+  if (!context) {
+    throw new Error('useTheme must be used within a ThemeProvider');
+  }
+  return context;
+};
+
+interface ThemeProviderProps {
+  children: ReactNode;
+}
+
+function ThemeProvider({ children }: ThemeProviderProps) {
+  const [mounted, setMounted] = useState(false);
+  const [hydrationComplete, setHydrationComplete] = useState(false);
+
+  useEffect(() => {
+    // Set mounted first
+    setMounted(true);
+    
+    // Initialize error handling and suppression
+    initializeErrorHandling();
+    
+    // Initialize MetaMask stability enhancements
+    enhanceMetaMaskStability();
+    
+    // Ensure LUXPLAY dark mode is always applied
+    const root = window.document.documentElement;
+    root.classList.remove('light');
+    root.classList.add('dark');
+    
+    // Set browser color scheme to dark
+    root.style.colorScheme = 'dark';
+    
+    // Store LUXPLAY theme preference
+    localStorage.setItem('luxplay-ui-theme', 'dark');
+    
+    // Mark hydration as complete after a short delay
+    const timer = setTimeout(() => {
+      setHydrationComplete(true);
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Prevent SSR hydration mismatch during initial load
+  if (!mounted || !hydrationComplete) {
+    return (
+      <div className="dark" style={{ colorScheme: 'dark' }} suppressHydrationWarning>
+        {children}
+      </div>
+    );
+  }
+
+  const value = { theme: 'dark' as const };
+
+  return (
+    <ThemeContext.Provider value={value}>
+      {children}
+    </ThemeContext.Provider>
+  );
+}
+
+// Main Providers component
+interface ProvidersProps {
+  children: ReactNode;
+}
+
+export function Providers({ children }: ProvidersProps) {
+  return (
+    <WalletErrorBoundary>
+      <BrowserExtensionHandler>
+        <WagmiProvider config={config}>
+          <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+              <ThemeProvider>
+                <BackgroundProvider>
+                  {children}
+                </BackgroundProvider>
+              </ThemeProvider>
+            </AuthProvider>
+          </QueryClientProvider>
+        </WagmiProvider>
+      </BrowserExtensionHandler>
+    </WalletErrorBoundary>
+  );
+}
+
+export { config, queryClient };

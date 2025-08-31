@@ -1,0 +1,54 @@
+[
+	{
+		"inputs": [],
+		"name": "decimals0",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "decimals1",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getPrice",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "price",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "peekSqrtPrice",
+		"outputs": [
+			{
+				"internalType": "uint160",
+				"name": "sqrtPX96",
+				"type": "uint160"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+]
