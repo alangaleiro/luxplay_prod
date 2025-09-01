@@ -161,6 +161,15 @@ export default function InviteProgramPage() {
         principal: (userInfo as any)?.[1]?.toString() || 'undefined',
         isLoading: isUserInfoLoading
       },
+      userTotals: {
+        data: userTotals ? (Array.isArray(userTotals) ? `Array(${userTotals.length})` : 'Object') : 'undefined',
+        rawData: userTotals,
+        cap2xMax: cap2xMax.toString(),
+        referralReceived: referralReceived.toString(),
+        remainingReferralCap: remainingReferralCap.toString(),
+        remainingCapFormatted: `${Number(fromWei(remainingReferralCap)).toFixed(4)} PLAY`,
+        isLoading: isUserTotalsLoading
+      },
       pendingRewards: {
         data: pendingRewards?.toString() || 'undefined',
         rawData: pendingRewards,
@@ -242,6 +251,23 @@ export default function InviteProgramPage() {
   // Calculate USD deposited
   const burned = (userInfo as any)?.[1] || 0n; // principal from userInfo[1]
   const usdDeposited = Number(fromWei(burned)) * Number(price || 0);
+
+  // Calculate remaining referral cap from userTotals
+  const cap2xMax = userTotals && Array.isArray(userTotals) ? (userTotals[3] as bigint) : 0n;
+  const referralReceived = userTotals && Array.isArray(userTotals) ? (userTotals[5] as bigint) : 0n;
+  const remainingReferralCap = cap2xMax > referralReceived ? cap2xMax - referralReceived : 0n;
+
+  // Debug the calculation values
+  console.log('[DEBUG] Remaining Cap Calculation:', {
+    cap2xMax: cap2xMax.toString(),
+    referralReceived: referralReceived.toString(),
+    remainingReferralCap: remainingReferralCap.toString(),
+    remainingReferralCapPLAY: Number(fromWei(remainingReferralCap)).toFixed(4),
+    price: price?.toString() || 'undefined',
+    priceNumber: Number(price || 0),
+    calculatedUSD: Number(fromWei(remainingReferralCap)) * Number(price || 0),
+    formattedUSD: formatUSD(Number(fromWei(remainingReferralCap)) * Number(price || 0))
+  });
 
   // Unlock thresholds with filtered data
   const unlockThresholds = Array.from({ length: 15 }, (_, i) => ({
@@ -361,13 +387,16 @@ export default function InviteProgramPage() {
                   </div>
                   
                   <div className="pt-2 text-sm text-muted-foreground">
-                    Remaining Cap: {isReferralCapLoading ? (
+                    Remaining Cap: {isUserTotalsLoading ? (
                       <span className="inline-flex items-center gap-1">
                         <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
                         Loading...
                       </span>
                     ) : (
-                      formatUSD(Number(fromWei((referralCap as any)?.remaining || 0n)) * Number(price || 0))
+                      <>
+                        {Number(fromWei(remainingReferralCap)).toFixed(4)} PLAY 
+                        ({formatUSD(Number(fromWei(remainingReferralCap)) * Number(price || 0))})
+                      </>
                     )} 
                     (approx)
                   </div>
@@ -405,26 +434,32 @@ export default function InviteProgramPage() {
                   <div className="flex justify-between">
                     <span>Current Cap:</span>
                     <span>
-                      {isReferralCapLoading ? (
+                      {isUserTotalsLoading ? (
                         <div className="flex items-center gap-2">
                           <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
                           Loading...
                         </div>
                       ) : (
-                        formatUSD(Number(fromWei((referralCap as any)?.[2] || 0n)) * Number(price || 0))
+                        <>
+                          {Number(fromWei(cap2xMax)).toFixed(4)} PLAY 
+                          ({formatUSD(Number(fromWei(cap2xMax)) * Number(price || 0))})
+                        </>
                       )}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Remaining:</span>
                     <span>
-                      {isReferralCapLoading ? (
+                      {isUserTotalsLoading ? (
                         <div className="flex items-center gap-2">
                           <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
                           Loading...
                         </div>
                       ) : (
-                        formatUSD(Number(fromWei((referralCap as any)?.[1] || 0n)) * Number(price || 0))
+                        <>
+                          {Number(fromWei(remainingReferralCap)).toFixed(4)} PLAY 
+                          ({formatUSD(Number(fromWei(remainingReferralCap)) * Number(price || 0))})
+                        </>
                       )}
                     </span>
                   </div>
@@ -432,12 +467,12 @@ export default function InviteProgramPage() {
                     <div 
                       className="bg-primary h-2 rounded-full" 
                       style={{ 
-                        width: `${(referralCap as any)?.[0] ? Number((referralCap as any)[0]) / 100 : 0}%` 
+                        width: `${cap2xMax > 0n ? Math.min(100, (Number(referralReceived) / Number(cap2xMax)) * 100) : 0}%` 
                       }}
                     ></div>
                   </div>
                   <div className="text-right text-sm text-muted-foreground">
-                    {(referralCap as any)?.[0] ? (Number((referralCap as any)[0]) / 100).toFixed(2) : '0'}% used
+                    {cap2xMax > 0n ? ((Number(referralReceived) / Number(cap2xMax)) * 100).toFixed(2) : '0.00'}% used
                   </div>
                 </div>
               )}
