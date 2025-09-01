@@ -1,6 +1,6 @@
 'use client';
 
-import { useAccount } from 'wagmi';
+import { useAccount, useConnect } from 'wagmi';
 import Link from 'next/link';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -26,8 +26,29 @@ import { PageLoader } from '@/components/PageLoader';
 
 export default function HomePage() {
   const { isConnected, isConnecting, address } = useAccount();
+  const { connect, connectors } = useConnect();
   const router = useRouter();
   const { data: isRegistered, isLoading: isCheckingRegistration } = useIsRegistered(address);
+
+  // Find MetaMask connector
+  const metaMaskConnector = connectors.find(
+    (connector) => connector.name.toLowerCase().includes('metamask') || connector.id === 'metaMask'
+  );
+
+  // Handle MetaMask connection
+  const handleConnectMetaMask = () => {
+    console.log('[DEBUG] Attempting MetaMask connection...');
+    console.log('[DEBUG] Available connectors:', connectors.map(c => ({ id: c.id, name: c.name })));
+    
+    if (metaMaskConnector) {
+      console.log('[DEBUG] Found MetaMask connector:', metaMaskConnector.name);
+      connect({ connector: metaMaskConnector });
+    } else {
+      console.log('[DEBUG] MetaMask connector not found, using first available connector');
+      // Fallback to first available connector if MetaMask not found
+      connect({ connector: connectors[0] });
+    }
+  };
 
   // Auto-redirect logic after wallet connection
   useEffect(() => {
@@ -72,11 +93,14 @@ export default function HomePage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               {!isConnected ? (
                 <>
-                  <Button size="lg" className="text-lg px-8" asChild>
-                    <Link href="/connect">
-                      <Wallet className="mr-2 h-5 w-5" />
-                      Get Started
-                    </Link>
+                  <Button 
+                    size="lg" 
+                    className="text-lg px-8" 
+                    onClick={handleConnectMetaMask}
+                    disabled={isConnecting}
+                  >
+                    <Wallet className="mr-2 h-5 w-5" />
+                    {isConnecting ? 'Connecting...' : 'Get Started'}
                   </Button>
                   <Button size="lg" variant="outline" className="text-lg px-8" asChild>
                     <Link href="/prize-program">
@@ -206,11 +230,20 @@ export default function HomePage() {
               Join thousands of users already earning rewards with LUXPLAY
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="text-lg px-8" asChild>
-                <Link href={isConnected ? "/prize-program" : "/connect"}>
-                  {isConnected ? "Go to Dashboard" : "Connect Wallet"}
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
+              <Button 
+                size="lg" 
+                className="text-lg px-8" 
+                onClick={isConnected ? () => router.push('/prize-program') : handleConnectMetaMask}
+                disabled={isConnecting}
+              >
+                {isConnecting ? (
+                  'Connecting...'
+                ) : isConnected ? (
+                  'Go to Dashboard'
+                ) : (
+                  'Connect Wallet'
+                )}
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </div>
           </div>
