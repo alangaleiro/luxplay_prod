@@ -298,7 +298,7 @@ export function EpochCountdown({
       
       <CountdownDisplay
         seconds={secondsUntilNextEpoch}
-        format="full"
+        format="compact"
         showProgress={true}
         totalSeconds={totalEpochDuration}
         onComplete={onEpochComplete}
@@ -333,7 +333,7 @@ export function PrizeDrawCountdown({
     };
 
     updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
+    const interval = setInterval(updateCountdown, 60000);
 
     return () => clearInterval(interval);
   }, [drawTime]);

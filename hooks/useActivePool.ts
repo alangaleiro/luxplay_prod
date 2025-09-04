@@ -11,7 +11,7 @@ export function useCountdown() {
     abi: activePoolAbi,
     functionName: 'secondsUntilNextEpoch',
     query: {
-      refetchInterval: 1000, // Update every second
+      refetchInterval: 60000, // Update every 60 seconds
     }
   });
 }
@@ -272,6 +272,7 @@ export function useCheckpoint() {
       address: CONTRACT_ADDRESSES.ACTIVE_POOL,
       abi: activePoolAbi,
       functionName: 'checkpoint',
+      gas: 5000000n, // Set explicit gas limit
     });
   };
 
@@ -311,7 +312,7 @@ export function useDeposit() {
       abi: activePoolAbi,
       functionName: 'deposit',
       args: [stake, plan],
-      gas: 500000n, // Set explicit gas limit to prevent estimation issues
+      gas: 5000000n, // Set explicit gas limit to prevent estimation issues
     });
   };
 
@@ -336,6 +337,7 @@ export function useClaimRewards() {
       abi: activePoolAbi,
       functionName: 'claimRewards',
       args: [amount],
+      gas: 5000000n, // Set explicit gas limit
     });
   };
 
@@ -358,6 +360,7 @@ export function useClaimReferralRewards() {
       abi: activePoolAbi,
       functionName: 'claimReferralRewards',
       args: [amount],
+      gas: 5000000n, // Set explicit gas limit
     });
   };
 
@@ -380,6 +383,7 @@ export function useUpgradePlan() {
       abi: activePoolAbi,
       functionName: 'upgradePlan',
       args: [newPlan],
+      gas: 5000000n, // Set explicit gas limit
     });
   };
 
@@ -420,7 +424,7 @@ export function useMoveWarmUpToActivePool() {
         address: CONTRACT_ADDRESSES.ACTIVE_POOL,
         abi: activePoolAbi,
         functionName: 'moveWarmUpToActivePool',
-        gas: 300000n, // Set explicit gas limit to prevent estimation issues
+        gas: 5000000n, // Set explicit gas limit to prevent estimation issues
       });
     } catch (error: any) {
       console.error('[ERROR] moveWarmUpToActivePool contract call failed:', error);

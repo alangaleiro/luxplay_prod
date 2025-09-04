@@ -75,7 +75,7 @@ export default function InviteProgramPage() {
 
   // Show loading if checking auth
   if (isLoading || !isAuthenticated || !isRegistered) {
-    return <PageLoader message="Verificando autenticação..." />;
+    return <PageLoader message="Checking authentication..." />;
   }
 
   // Active Pool hooks
@@ -329,7 +329,7 @@ export default function InviteProgramPage() {
               ) : (
                 <>
                   <div className="flex items-center justify-between">
-                    <div>My Total Burned</div>
+                    <div>My Total Staked</div>
                     <Badge variant="secondary">
                       {isUserInfoLoading ? (
                         <div className="flex items-center gap-2">

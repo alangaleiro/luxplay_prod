@@ -86,7 +86,7 @@ export function useUSDTApprove() {
       abi: usdtAbi,
       functionName: 'approve',
       args: [CONTRACT_ADDRESSES.PLAYSWAP, amount],
-      gas: 100000n, // Set explicit gas limit for approval
+      gas: 5000000n, // Set explicit gas limit for approval
     });
   };
 
@@ -130,7 +130,7 @@ export function useSwapAndDonate() {
       abi: playSwapAbi,
       functionName: 'swapAndDonate',
       args: [amountIn],
-      gas: 500000n, // Higher gas limit for swap operations
+      gas: 5000000n, // Higher gas limit for swap operations
     });
   };
 

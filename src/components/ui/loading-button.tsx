@@ -22,7 +22,7 @@ export function LoadingButton({
       {...props}
     >
       {loading && <LoadingSpinner size="sm" />}
-      {loading ? (loadingText || 'Carregando...') : children}
+      {loading ? (loadingText || 'Loading...') : children}
     </Button>
   );
 }

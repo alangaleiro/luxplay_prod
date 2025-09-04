@@ -6,7 +6,7 @@ interface PageLoaderProps {
 }
 
 export function PageLoader({ 
-  message = 'Carregando...', 
+  message = 'Loading...', 
   fullscreen = true 
 }: PageLoaderProps) {
   if (fullscreen) {

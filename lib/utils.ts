@@ -141,6 +141,20 @@ export const formatCountdown = (seconds: number): string => {
 };
 
 /**
+ * Format epoch countdown in hours and minutes only
+ * @param seconds - Remaining seconds until next epoch
+ * @returns Formatted countdown string (e.g., "2h 45m")
+ */
+export const formatEpochCountdown = (seconds: number): string => {
+  if (seconds <= 0) return '0h 0m';
+  
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  
+  return `${hours}h ${minutes}m`;
+};
+
+/**
  * Truncate an Ethereum address for display
  * @param address - Full Ethereum address
  * @param startLength - Characters to show at start (default: 6)

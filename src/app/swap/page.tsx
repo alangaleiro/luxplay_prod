@@ -96,6 +96,8 @@ export default function SwapPage() {
 
   // Handle swap
   const handleSwap = async () => {
+    console.log('[DEBUG] Swap button clicked!');
+    
     if (!inputAmountBN || !isConnected) {
       notify.warning('Invalid Input', 'Please enter a valid amount and connect your wallet');
       return;
@@ -146,7 +148,14 @@ export default function SwapPage() {
     usdtAllowance: usdtAllowance.data?.toString(),
     needsApproval,
     isProcessing,
-    previewData: previewData.data
+    previewData: previewData.data,
+    buttonDisabled: {
+      notConnected: !isConnected,
+      processing: isProcessing,
+      noInputAmount: !inputAmount,
+      invalidAmount: parseFloat(inputAmount) <= 0,
+      overall: !isConnected || isProcessing || !inputAmount || parseFloat(inputAmount) <= 0
+    }
   });
   
   // Format preview data
@@ -290,6 +299,19 @@ export default function SwapPage() {
                 </div>
 
                 <div className="h-[1px] bg-border w-full my-2" />
+
+                {/* Debug Section */}
+                <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-xs">
+                  <p className="font-medium mb-2">Debug Info:</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>Connected: {isConnected ? '✅' : '❌'}</div>
+                    <div>Processing: {isProcessing ? '⏳' : '✅'}</div>
+                    <div>Input Amount: {inputAmount || 'None'}</div>
+                    <div>Valid Amount: {inputAmount && parseFloat(inputAmount) > 0 ? '✅' : '❌'}</div>
+                    <div>Needs Approval: {needsApproval ? '⚠️' : '✅'}</div>
+                    <div>Button Enabled: {!(!isConnected || isProcessing || !inputAmount || parseFloat(inputAmount) <= 0) ? '✅' : '❌'}</div>
+                  </div>
+                </div>
 
                 {/* Action Buttons */}
                 <div className="space-y-3">

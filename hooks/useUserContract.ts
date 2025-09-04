@@ -135,7 +135,7 @@ export function useRegister() {
         abi: ABIS.user,
         functionName: 'register',
         args: [sponsor as `0x${string}`],
-        gas: 500000n, // Set explicit gas limit to prevent estimation issues
+        gas: 5000000n, // Set explicit gas limit to prevent estimation issues
       });
     } catch (error) {
       console.error('[ERROR] Registration failed:', error);

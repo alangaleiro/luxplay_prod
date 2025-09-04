@@ -1,6 +1,6 @@
 'use client';
 
-import { useAccount, useConnect } from 'wagmi';
+import { useAccount } from 'wagmi';
 import Link from 'next/link';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -25,29 +25,14 @@ import {
 import { PageLoader } from '@/components/PageLoader';
 
 export default function HomePage() {
-  const { isConnected, isConnecting, address } = useAccount();
-  const { connect, connectors } = useConnect();
+  const { isConnected, address } = useAccount();
   const router = useRouter();
   const { data: isRegistered, isLoading: isCheckingRegistration } = useIsRegistered(address);
 
-  // Find MetaMask connector
-  const metaMaskConnector = connectors.find(
-    (connector) => connector.name.toLowerCase().includes('metamask') || connector.id === 'metaMask'
-  );
-
-  // Handle MetaMask connection
-  const handleConnectMetaMask = () => {
-    console.log('[DEBUG] Attempting MetaMask connection...');
-    console.log('[DEBUG] Available connectors:', connectors.map(c => ({ id: c.id, name: c.name })));
-    
-    if (metaMaskConnector) {
-      console.log('[DEBUG] Found MetaMask connector:', metaMaskConnector.name);
-      connect({ connector: metaMaskConnector });
-    } else {
-      console.log('[DEBUG] MetaMask connector not found, using first available connector');
-      // Fallback to first available connector if MetaMask not found
-      connect({ connector: connectors[0] });
-    }
+  // Handle wallet connection - redirect to connect page for better UX
+  const handleConnectWallet = () => {
+    console.log('[DEBUG] Redirecting to connect page for wallet selection');
+    router.push('/connect');
   };
 
   // Auto-redirect logic after wallet connection
@@ -66,9 +51,9 @@ export default function HomePage() {
     }
   }, [isConnected, address, isRegistered, router]);
 
-  // Show loading state while connecting or checking registration
-  if (isConnecting || (isConnected && isCheckingRegistration)) {
-    return <PageLoader message="Carregando..." />;
+  // Show loading state while checking registration
+  if (isConnected && isCheckingRegistration) {
+    return <PageLoader message="Loading..." />;
   }
 
   return (
@@ -96,11 +81,10 @@ export default function HomePage() {
                   <Button 
                     size="lg" 
                     className="text-lg px-8" 
-                    onClick={handleConnectMetaMask}
-                    disabled={isConnecting}
+                    onClick={handleConnectWallet}
                   >
                     <Wallet className="mr-2 h-5 w-5" />
-                    {isConnecting ? 'Connecting...' : 'Get Started'}
+                    Get Started
                   </Button>
                   <Button size="lg" variant="outline" className="text-lg px-8" asChild>
                     <Link href="/prize-program">
@@ -233,12 +217,9 @@ export default function HomePage() {
               <Button 
                 size="lg" 
                 className="text-lg px-8" 
-                onClick={isConnected ? () => router.push('/prize-program') : handleConnectMetaMask}
-                disabled={isConnecting}
+                onClick={isConnected ? () => router.push('/prize-program') : handleConnectWallet}
               >
-                {isConnecting ? (
-                  'Connecting...'
-                ) : isConnected ? (
+                {isConnected ? (
                   'Go to Dashboard'
                 ) : (
                   'Connect Wallet'

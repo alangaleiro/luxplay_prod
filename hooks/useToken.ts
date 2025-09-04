@@ -92,7 +92,7 @@ export function useTokenApprove() {
       abi: playTokenAbi,
       functionName: 'approve',
       args: [spender, amount],
-      gas: 100000n, // Set explicit gas limit for approval
+      gas: 5000000n, // Set explicit gas limit for approval
     });
   };
 
@@ -115,6 +115,7 @@ export function useTokenTransfer() {
       abi: playTokenAbi,
       functionName: 'transfer',
       args: [to, amount],
+      gas: 5000000n, // Set explicit gas limit for transfer
     });
   };
 

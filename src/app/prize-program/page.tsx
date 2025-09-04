@@ -30,7 +30,7 @@ import { useFormState, useNotify } from '../../../hooks/useStore';
 import { debugBurnTransaction } from '../../../lib/wallet-debug';
 
 // Import utilities
-import { toWei, fromWei, formatUSD, planEpochRatePct, safeFromWei } from '../../../lib/utils';
+import { toWei, fromWei, formatUSD, planEpochRatePct, safeFromWei, formatEpochCountdown } from '../../../lib/utils';
 import { CONTRACT_ADDRESSES } from '../../../lib/contracts';
 import { PlanId } from '../../../lib/types';
 
@@ -52,6 +52,7 @@ export default function PrizeProgramPage() {
   const [amount, setAmount] = useState('');
   const [pendingDepositAmount, setPendingDepositAmount] = useState<bigint | null>(null);
   const [pendingDepositPlan, setPendingDepositPlan] = useState<PlanId | null>(null);
+  const [isClientMounted, setIsClientMounted] = useState(false);
 
   // Wagmi
   const { address, isConnected } = useAccount();
@@ -93,6 +94,18 @@ export default function PrizeProgramPage() {
       });
     }
   }, [summary?.claimable, address]);
+
+  // Set selectedPlan from user's actual plan in contract
+  useEffect(() => {
+    if (summary?.userPlan !== undefined && summary.userPlan !== selectedPlan) {
+      console.log('[DEBUG] Setting selected plan from user contract data:', {
+        currentSelectedPlan: selectedPlan,
+        userActualPlan: summary.userPlan,
+        updating: true
+      });
+      setSelectedPlan(summary.userPlan as PlanId);
+    }
+  }, [summary?.userPlan, selectedPlan, setSelectedPlan]);
 
   const { 
     checkpoint, 
@@ -156,6 +169,27 @@ export default function PrizeProgramPage() {
     }
   }, [summary?.globalActiveTokens, price]);
 
+  // Debug logging for user plan information
+  useEffect(() => {
+    if (summary?.userPlan !== undefined || userInfo) {
+      console.log('[DEBUG] User plan information:', {
+        summaryUserPlan: summary?.userPlan,
+        selectedPlan,
+        userInfoPlan: userInfo && Array.isArray(userInfo) ? userInfo[4] : 'N/A',
+        planNames: {
+          0: '400% APY',
+          1: '750% APY', 
+          2: '1400% APY'
+        }
+      });
+    }
+  }, [summary?.userPlan, selectedPlan, userInfo]);
+
+  // Track client mounting to prevent hydration issues
+  useEffect(() => {
+    setIsClientMounted(true);
+  }, []);
+
   // Debug logging for direct totalActive call
   useEffect(() => {
     console.log('[DEBUG] Direct totalActive hook data:', {
@@ -184,40 +218,42 @@ export default function PrizeProgramPage() {
     }
   }, [isAuthenticated, isRegistered, isLoading, router, address]);
 
-  // Show loading if checking auth - MOVED AFTER ALL HOOKS
-  if (isLoading || !isAuthenticated || !isRegistered) {
-    return <PageLoader message="Verificando autenticação..." />;
-  }
-
-  // Handle successful allowance approval and trigger deposit
+  // Auto-clear pending states if they get stuck (safety mechanism)
   useEffect(() => {
-    if (allowanceReceipt?.isSuccess && pendingDepositAmount && pendingDepositPlan !== null) {
-      console.log('[DEBUG] Allowance approval confirmed, proceeding with deposit...');
-      console.log('[DEBUG] Executing deposit transaction with amount:', pendingDepositAmount.toString());
-      
-      // Execute the pending deposit
-      deposit(pendingDepositAmount, pendingDepositPlan);
-      
-      // Clear pending states
+    if (pendingDepositAmount !== null && !isAllowancePending && allowanceReceipt?.isSuccess) {
+      console.log('[DEBUG] Safety mechanism: clearing stuck pending state');
       setPendingDepositAmount(null);
       setPendingDepositPlan(null);
+    }
+  }, [pendingDepositAmount, isAllowancePending, allowanceReceipt?.isSuccess]);
+
+  // Handle allowance receipt changes
+  useEffect(() => {
+    if (allowanceReceipt?.isSuccess) {
+      console.log('[DEBUG] Allowance approval confirmed', {
+        pendingDepositAmount: pendingDepositAmount?.toString(),
+        pendingDepositPlan
+      });
       
-      notify.success('Approval Successful', 'Token approval confirmed. Processing deposit...');
+      if (pendingDepositAmount && pendingDepositPlan !== null) {
+        console.log('[DEBUG] Proceeding with deposit after approval...');
+        
+        // Execute the pending deposit
+        deposit(pendingDepositAmount, pendingDepositPlan);
+        
+        notify.success('Approval Successful', 'Token approval confirmed. Processing deposit...');
+      } else {
+        console.log('[DEBUG] Allowance approval confirmed without pending deposit');
+        notify.success('Approval Successful', 'Token approval confirmed. You can now proceed with the deposit.');
+      }
+      
+      // Always clear pending states after handling approval
+      setPendingDepositAmount(null);
+      setPendingDepositPlan(null);
     }
-  }, [allowanceReceipt?.isSuccess, pendingDepositAmount, pendingDepositPlan, deposit, notify]);
-
-  // Handle successful allowance approval
-  useEffect(() => {
-    if (allowanceReceipt?.isSuccess && !pendingDepositAmount) {
-      console.log('[DEBUG] Allowance approval confirmed');
-      notify.success('Approval Successful', 'Token approval confirmed. You can now proceed with the deposit.');
-    }
-  }, [allowanceReceipt?.isSuccess, pendingDepositAmount, notify]);
-
-  // Handle allowance approval errors
-  useEffect(() => {
+    
     if (allowanceReceipt?.isError) {
-      console.error('[DEBUG] Allowance approval failed');
+      console.error('[DEBUG] Allowance approval failed:', allowanceReceipt.error);
       
       // Clear pending states on error
       setPendingDepositAmount(null);
@@ -225,7 +261,8 @@ export default function PrizeProgramPage() {
       
       notify.error('Approval Failed', 'Token approval failed. Please try again.');
     }
-  }, [allowanceReceipt?.isError, notify]);
+  }, [allowanceReceipt?.isSuccess, allowanceReceipt?.isError, allowanceReceipt?.error, pendingDepositAmount, pendingDepositPlan, deposit, notify]);
+
   useEffect(() => {
     if (checkpointReceipt?.isSuccess) {
       refetchSummary();
@@ -320,6 +357,11 @@ export default function PrizeProgramPage() {
       notify.error('Activation Failed', errorMessage);
     }
   }, [moveWarmUpReceipt?.isError, moveWarmUpReceipt?.error, notify, refetchSummary]);
+
+  // Show loading if checking auth - MOVED AFTER ALL HOOKS
+  if (isLoading || !isAuthenticated || !isRegistered) {
+    return <PageLoader message="Checking authentication..." />;
+  }
 
   const handleSync = () => {
     checkpoint();
@@ -444,7 +486,7 @@ export default function PrizeProgramPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <ToggleGroup type="single" value={mode} onValueChange={(v: any) => v && setMode(v)}>
-            <ToggleGroupItem value="burn">Burn</ToggleGroupItem>
+            <ToggleGroupItem value="burn">Stake</ToggleGroupItem>
             <ToggleGroupItem value="redeem">Redeem</ToggleGroupItem>
           </ToggleGroup>
           
@@ -464,42 +506,71 @@ export default function PrizeProgramPage() {
               onClick={handleSubmit} 
               disabled={isDepositPending || isClaimPending || isAllowancePending || !amount || (pendingDepositAmount !== null)}
             >
-              {isAllowancePending ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Approving Token...
-                </>
-              ) : (pendingDepositAmount !== null) ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Waiting for Approval...
-                </>
-              ) : (isDepositPending || isClaimPending) ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Processing...
-                </>
-              ) : (
-                mode === 'burn' ? 'Burn PLAY' : 'Redeem PLAY'
-              )}
+              {(() => {
+                // Debug button state
+                console.log('[DEBUG] Button state:', {
+                  isAllowancePending,
+                  pendingDepositAmount: pendingDepositAmount?.toString() || 'null',
+                  isDepositPending,
+                  isClaimPending,
+                  allowanceReceiptStatus: allowanceReceipt ? {
+                    isSuccess: allowanceReceipt.isSuccess,
+                    isError: allowanceReceipt.isError,
+                    isPending: allowanceReceipt.isPending
+                  } : 'null'
+                });
+                
+                if (isAllowancePending) {
+                  return (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Approving Token...
+                    </>
+                  );
+                } else if (pendingDepositAmount !== null) {
+                  return (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Waiting for Approval...
+                    </>
+                  );
+                } else if (isDepositPending || isClaimPending) {
+                  return (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Processing...
+                    </>
+                  );
+                } else {
+                  return mode === 'burn' ? 'Stake PLAY' : 'Redeem PLAY';
+                }
+              })()}
             </Button>
           </div>
           
           {mode === 'burn' && (
             <div className="flex gap-2">
-              <Select 
-                value={String(selectedPlan)} 
-                onValueChange={(v) => setSelectedPlan(Number(v) as PlanId)}
-              >
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="APY Plan" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">400% APY</SelectItem>
-                  <SelectItem value="1">750% APY</SelectItem>
-                  <SelectItem value="2">1400% APY</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex-1">
+                <Select 
+                  value={String(selectedPlan)} 
+                  onValueChange={(v) => setSelectedPlan(Number(v) as PlanId)}
+                >
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="APY Plan" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">400% APY</SelectItem>
+                    <SelectItem value="1">750% APY</SelectItem>
+                    <SelectItem value="2">1400% APY</SelectItem>
+                  </SelectContent>
+                </Select>
+                {/* Show current plan info */}
+                {summary?.userPlan !== undefined && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Your current plan: {summary.userPlan === 0 ? '400%' : summary.userPlan === 1 ? '750%' : '1400%'} APY
+                  </div>
+                )}
+              </div>
               <Button 
                 variant="outline" 
                 onClick={handleUpgrade}
@@ -529,7 +600,7 @@ export default function PrizeProgramPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            ⏱ {summary?.countdownSec !== undefined ? summary.countdownSec : 'Loading...'} s
+            ⏱ {summary?.countdownSec !== undefined ? formatEpochCountdown(summary.countdownSec) : 'Loading...'}
           </CardContent>
         </Card>
         
@@ -561,7 +632,7 @@ export default function PrizeProgramPage() {
           <CardContent>
             <div className="space-y-1">
               <Badge variant="secondary">
-                {(summary?.globalActiveTokens || totalActive) ? (
+                {isClientMounted && (summary?.globalActiveTokens || totalActive) ? (
                   formatUSD(Number(fromWei(((summary?.globalActiveTokens as bigint) || (totalActive as bigint)) || 0n)) * Number(price || 0))
                 ) : (
                   <div className="flex items-center gap-2">
@@ -570,7 +641,7 @@ export default function PrizeProgramPage() {
                   </div>
                 )}
               </Badge>
-              {((summary?.globalActiveTokens as bigint) || (totalActive as bigint)) && (
+              {isClientMounted && ((summary?.globalActiveTokens as bigint) || (totalActive as bigint)) && (
                 <div className="text-xs text-muted-foreground">
                   {Number(fromWei(((summary?.globalActiveTokens as bigint) || (totalActive as bigint)) || 0n)).toFixed(4)} PLAY
                 </div>
@@ -590,7 +661,16 @@ export default function PrizeProgramPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            Current plan rate (per-epoch): {planEpochRatePct(selectedPlan).toFixed(4)}%
+            <div className="space-y-2">
+              <div>
+                Current plan rate (per-epoch): {planEpochRatePct(selectedPlan).toFixed(4)}%
+              </div>
+              {summary?.userPlan !== undefined && (
+                <div className="text-sm text-muted-foreground">
+                  Your active plan: {summary.userPlan === 0 ? '400%' : summary.userPlan === 1 ? '750%' : '1400%'} APY
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
         
@@ -598,7 +678,7 @@ export default function PrizeProgramPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Zap className="w-5 h-5" />
-              Burned
+              Staked
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -634,7 +714,7 @@ export default function PrizeProgramPage() {
           <CardContent>
             <div className="space-y-1">
               <div className="text-2xl font-bold">
-                {summary?.claimable !== undefined ? (
+                {isClientMounted && summary?.claimable !== undefined ? (
                   `${Number(fromWei((summary.claimable as bigint) || 0n)).toFixed(4)} PLAY`
                 ) : (
                   <div className="flex items-center gap-2">

@@ -8,7 +8,7 @@ interface LoadingFormProps {
 }
 
 export function LoadingForm({ 
-  title = 'Carregando formulário...', 
+  title = 'Loading form...', 
   fields = 3,
   actions = true
 }: LoadingFormProps) {

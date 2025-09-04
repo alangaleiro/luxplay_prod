@@ -17,7 +17,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     // Páginas que requerem conexão e registro
     const protectedRoutes = ['/prize-program', '/invite', '/verify-registration', '/referral-network'];
     
-    // Se ainda estiver carregando, aguardar
+    // If still loading, wait
     if (isLoading) {
       return;
     }
@@ -53,7 +53,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   // Mostrar loading durante o carregamento inicial
   if (initialLoad || isLoading) {
-    return <PageLoader message="Carregando..." />;
+    return <PageLoader message="Loading..." />;
   }
 
   return (

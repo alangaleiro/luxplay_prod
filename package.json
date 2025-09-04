@@ -15,7 +15,8 @@
     "metamask-diag": "node scripts/metamask-diagnosis.js",
     "dep-check": "node scripts/dependency-check.js",
     "status": "node scripts/status.js",
-    "test-claimable": "node scripts/test-claimable.js"
+    "test-claimable": "node scripts/test-claimable.js",
+    "walletconnect-test": "node scripts/walletconnect-test.js"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",

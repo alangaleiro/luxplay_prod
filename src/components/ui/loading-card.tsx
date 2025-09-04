@@ -8,7 +8,7 @@ interface LoadingCardProps {
 }
 
 export function LoadingCard({ 
-  title = 'Carregando...', 
+  title = 'Loading...', 
   message = 'Aguarde enquanto carregamos as informações',
   className
 }: LoadingCardProps) {

@@ -32,7 +32,8 @@ function Badge({
   ...props
 }: React.ComponentProps<"span"> &
   VariantProps<typeof badgeVariants> & { asChild?: boolean }) {
-  const Comp = asChild ? Slot : "span"
+  // Use button if onClick is provided, otherwise use span
+  const Comp = asChild ? Slot : (props.onClick ? "button" : "span") as any
 
   return (
     <Comp

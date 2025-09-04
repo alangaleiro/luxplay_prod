@@ -3,8 +3,7 @@
 import { WagmiProvider, createConfig, http } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { polygon } from "wagmi/chains";
-import { getDefaultConfig } from "connectkit";
-import { injected, walletConnect, metaMask, coinbaseWallet } from '@wagmi/connectors';
+import { injected, walletConnect, metaMask, coinbaseWallet, safe } from '@wagmi/connectors';
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { BackgroundProvider } from '@/components/ui/background-provider';
 import { BrowserExtensionHandler } from '@/components/BrowserExtensionHandler';
@@ -12,33 +11,69 @@ import { WalletErrorBoundary } from '@/components/WalletErrorBoundary';
 import { initializeErrorHandling } from '../../lib/error-suppression';
 import { enhanceMetaMaskStability } from '../../lib/metamask-stability';
 import { AuthProvider } from '@/contexts/AuthContext';
+import '../../lib/wallet-diagnostic'; // Auto-run diagnostics
 
-// Optimized Wagmi configuration for LuxPlay (Play Hub v2)
-const config = createConfig(
-  getDefaultConfig({
-    chains: [polygon],
-    transports: {
-      [polygon.id]: http(process.env.NEXT_PUBLIC_RPC_URL!, {
-        timeout: 20000, // 20 second timeout
-        retryCount: 3,
-        retryDelay: 1000,
-      }),
-    },
-    walletConnectProjectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!,
-    appName: "LuxPlay",
-    appDescription: "LuxPlay DeFi Platform",
-    appUrl: "https://luxplay.io",
-    appIcon: "https://luxplay.io/logo.png",
-    // Enhanced connection options for stability
-    ssr: false,
-    batch: {
-      multicall: {
-        batchSize: 100,
-        wait: 16,
+// Enhanced Wagmi configuration for LuxPlay with multiple wallet support
+const config = createConfig({
+  chains: [polygon],
+  transports: {
+    [polygon.id]: http(process.env.NEXT_PUBLIC_RPC_URL!, {
+      timeout: 20000, // 20 second timeout
+      retryCount: 3,
+      retryDelay: 1000,
+    }),
+  },
+  connectors: [
+    // MetaMask - Primary connector
+    metaMask({
+      dappMetadata: {
+        name: "LuxPlay",
+        url: "https://luxplay.io",
+        iconUrl: "https://luxplay.io/logo.png"
+      }
+    }),
+    // WalletConnect - For mobile wallets (Trust, SafePal, etc.)
+    walletConnect({
+      projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '28313425a1e696b76d4ed773d5d5d7d5',
+      metadata: {
+        name: "LuxPlay",
+        description: "LuxPlay DeFi Platform",
+        url: process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://luxplay.io',
+        icons: ["https://avatars.githubusercontent.com/u/37784886"]
       },
+      showQrModal: true,
+      qrModalOptions: {
+        themeMode: 'dark'
+      }
+    }),
+    // Injected connector for browser wallets (SafePal, Trust Wallet browser extensions)
+    injected({
+      target: () => ({
+        id: 'injected',
+        name: 'Browser Wallet',
+        provider: typeof window !== 'undefined' ? window.ethereum : undefined,
+      })
+    }),
+    // Coinbase Wallet
+    coinbaseWallet({
+      appName: "LuxPlay",
+      appLogoUrl: "https://luxplay.io/logo.png",
+    }),
+    // Safe Wallet
+    safe({
+      allowedDomains: [/luxplay\.io$/],
+      debug: false,
+    })
+  ],
+  // Enhanced connection options for stability
+  ssr: false,
+  batch: {
+    multicall: {
+      batchSize: 100,
+      wait: 16,
     },
-  })
-);
+  },
+});
 
 // Optimized Query client for Play Hub v2
 const queryClient = new QueryClient({
