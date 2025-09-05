@@ -246,8 +246,7 @@ export default function ConnectPage() {
           /* Wallet Connection Card */
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Wallet className="w-5 h-5" />
+              <CardTitle>
                 Connect Wallet
               </CardTitle>
             </CardHeader>
@@ -424,8 +423,7 @@ export default function ConnectPage() {
           /* Registration Form */
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5" />
+              <CardTitle>
                 Complete Registration
               </CardTitle>
             </CardHeader>
@@ -515,8 +513,7 @@ export default function ConnectPage() {
           /* Success State */
           <Card className="border-green-700/50 bg-green-900/20 shadow-green-900/10">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-green-900 dark:text-green-100">
-                <CheckCircle className="w-5 h-5" />
+              <CardTitle className="text-green-900 dark:text-green-100">
                 Welcome to LuxPlay!
               </CardTitle>
             </CardHeader>

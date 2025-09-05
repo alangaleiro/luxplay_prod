@@ -40,6 +40,12 @@ import {
 export default function SwapPage() {
   const [inputAmount, setInputAmount] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [swapDirection, setSwapDirection] = useState<'USDT_TO_PLAY' | 'PLAY_TO_USDT'>('USDT_TO_PLAY');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   // Wagmi
   const { address, isConnected } = useAccount();
@@ -180,6 +186,10 @@ export default function SwapPage() {
 
   const preview = formatPreviewData();
 
+  if (!mounted) {
+    return <div suppressHydrationWarning />;
+  }
+
   return (
     <div className="min-h-screen p-6">
       <div className="container mx-auto max-w-4xl">
@@ -218,18 +228,20 @@ export default function SwapPage() {
             {/* Swap Card */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Zap className="w-5 h-5" />
+                <CardTitle>
                   PlaySwap Exchange
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* From Token (USDT) */}
+                {/* From Token */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-medium">From</label>
                     <div className="text-xs text-muted-foreground">
-                      Balance: {usdtBalance.data ? safeFromWei(usdtBalance.data as bigint, 6) : '0.00'} USDT
+                      Balance: {swapDirection === 'USDT_TO_PLAY' 
+                        ? (usdtBalance.data ? safeFromWei(usdtBalance.data as bigint, 6) : '0.00') + ' USDT'
+                        : '0.00 PLAY'
+                      }
                     </div>
                   </div>
                   <div className="flex items-center gap-2 p-3 bg-secondary/50 rounded-lg">
@@ -245,42 +257,57 @@ export default function SwapPage() {
                       className="min-w-[100px]"
                       disabled
                     >
-                      <Coins className="w-4 h-4 mr-2" />
-                      USDT
+                      {swapDirection === 'USDT_TO_PLAY' ? (
+                        <><Coins className="w-4 h-4 mr-2" />USDT</>
+                      ) : (
+                        <><div className="w-4 h-4 mr-2 bg-primary rounded-full" />PLAY</>
+                      )}
                     </Button>
                     <Button 
                       variant="ghost" 
                       size="sm"
                       onClick={handleMaxAmount}
-                      disabled={!usdtBalance.data}
+                      disabled={swapDirection === 'USDT_TO_PLAY' ? !usdtBalance.data : true}
                     >
                       Max
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Tether USD (6 decimals)
+                    {swapDirection === 'USDT_TO_PLAY' ? 'Tether USD (6 decimals)' : 'Play Token (18 decimals)'}
                   </p>
                 </div>
 
                 {/* Swap Arrow */}
                 <div className="flex justify-center">
-                  <div className="p-2 rounded-full border bg-background">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="rounded-full"
+                    onClick={() => {
+                      setSwapDirection(prev => 
+                        prev === 'USDT_TO_PLAY' ? 'PLAY_TO_USDT' : 'USDT_TO_PLAY'
+                      );
+                    }}
+                  >
                     <ArrowUpDown className="w-4 h-4" />
-                  </div>
+                  </Button>
                 </div>
 
-                {/* To Token (PLAY) */}
+                {/* To Token */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-sm font-medium">To</label>
                     <div className="text-xs text-muted-foreground">
-                      Expected: {preview?.expectedOut || '0.00'} PLAY
+                      Expected: {swapDirection === 'USDT_TO_PLAY' 
+                        ? (preview?.expectedOut || '0.00') + ' PLAY'
+                        : '0.00 USDT'
+                      }
                     </div>
                   </div>
                   <div className="flex items-center gap-2 p-3 bg-secondary/50 rounded-lg">
                     <Input
                       placeholder="0.00"
-                      value={preview?.expectedOut || ''}
+                      value={swapDirection === 'USDT_TO_PLAY' ? (preview?.expectedOut || '') : '0.00'}
                       className="flex-1 border-0 bg-transparent text-lg font-semibold focus-visible:ring-0 px-0"
                       disabled
                     />
@@ -289,29 +316,19 @@ export default function SwapPage() {
                       className="min-w-[100px]"
                       disabled
                     >
-                      <div className="w-4 h-4 mr-2 bg-primary rounded-full" />
-                      PLAY
+                      {swapDirection === 'USDT_TO_PLAY' ? (
+                        <><div className="w-4 h-4 mr-2 bg-primary rounded-full" />PLAY</>
+                      ) : (
+                        <><Coins className="w-4 h-4 mr-2" />USDT</>
+                      )}
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Play Token (18 decimals)
+                    {swapDirection === 'USDT_TO_PLAY' ? 'Play Token (18 decimals)' : 'Tether USD (6 decimals)'}
                   </p>
                 </div>
 
                 <div className="h-[1px] bg-border w-full my-2" />
-
-                {/* Debug Section */}
-                <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-xs">
-                  <p className="font-medium mb-2">Debug Info:</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>Connected: {isConnected ? '✅' : '❌'}</div>
-                    <div>Processing: {isProcessing ? '⏳' : '✅'}</div>
-                    <div>Input Amount: {inputAmount || 'None'}</div>
-                    <div>Valid Amount: {inputAmount && parseFloat(inputAmount) > 0 ? '✅' : '❌'}</div>
-                    <div>Needs Approval: {needsApproval ? '⚠️' : '✅'}</div>
-                    <div>Button Enabled: {!(!isConnected || isProcessing || !inputAmount || parseFloat(inputAmount) <= 0) ? '✅' : '❌'}</div>
-                  </div>
-                </div>
 
                 {/* Action Buttons */}
                 <div className="space-y-3">
@@ -375,8 +392,7 @@ export default function SwapPage() {
             {preview && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Info className="w-5 h-5" />
+                  <CardTitle>
                     Swap Preview
                   </CardTitle>
                 </CardHeader>
@@ -422,8 +438,7 @@ export default function SwapPage() {
             {/* Token Prices */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5" />
+                <CardTitle>
                   Token Prices
                 </CardTitle>
               </CardHeader>
@@ -462,45 +477,48 @@ export default function SwapPage() {
               </CardContent>
             </Card>
 
-            {/* Contract Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <AlertCircle className="w-5 h-5" />
-                  Contract Info
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="space-y-2">
-                  <div>
-                    <p className="text-sm font-medium">PlaySwap Contract</p>
-                    <p className="text-xs text-muted-foreground break-all">
-                      {CONTRACT_ADDRESSES.PLAYSWAP}
-                    </p>
-                  </div>
-                  <div className="h-[1px] bg-border w-full my-2" />
-                  <div>
-                    <p className="text-sm font-medium">PLAY Token</p>
-                    <p className="text-xs text-muted-foreground break-all">
-                      {CONTRACT_ADDRESSES.PLAY_TOKEN}
-                    </p>
-                  </div>
-                  <div className="h-[1px] bg-border w-full my-2" />
-                  <div>
-                    <p className="text-sm font-medium">USDT Token</p>
-                    <p className="text-xs text-muted-foreground break-all">
-                      {CONTRACT_ADDRESSES.USDT_TOKEN}
-                    </p>
-                  </div>
-                </div>
-
-                <Button variant="outline" size="sm" className="w-full">
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  View on Explorer
-                </Button>
-              </CardContent>
-            </Card>
+            
           </div>
+        </div>
+
+        {/* Contract Information Section */}
+        <div className="mt-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                Contract Info
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="space-y-2">
+                <div>
+                  <p className="text-sm font-medium">PlaySwap Contract</p>
+                  <p className="text-xs text-muted-foreground break-all">
+                    {CONTRACT_ADDRESSES.PLAYSWAP}
+                  </p>
+                </div>
+                <div className="h-[1px] bg-border w-full my-2" />
+                <div>
+                  <p className="text-sm font-medium">PLAY Token</p>
+                  <p className="text-xs text-muted-foreground break-all">
+                    {CONTRACT_ADDRESSES.PLAY_TOKEN}
+                  </p>
+                </div>
+                <div className="h-[1px] bg-border w-full my-2" />
+                <div>
+                  <p className="text-sm font-medium">USDT Token</p>
+                  <p className="text-xs text-muted-foreground break-all">
+                    {CONTRACT_ADDRESSES.USDT_TOKEN}
+                  </p>
+                </div>
+              </div>
+
+              <Button variant="outline" size="sm" className="w-full">
+                <ExternalLink className="w-4 h-4 mr-2" />
+                View on Explorer
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

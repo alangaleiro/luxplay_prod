@@ -211,8 +211,7 @@ export default function BuyPage() {
             {/* Swap Card */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Zap className="w-5 h-5" />
+                <CardTitle>
                   PlaySwap Exchange
                 </CardTitle>
               </CardHeader>
@@ -371,8 +370,7 @@ export default function BuyPage() {
             {previewData && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Info className="w-5 h-5" />
+                  <CardTitle>
                     Swap Preview
                   </CardTitle>
                 </CardHeader>
@@ -427,8 +425,7 @@ export default function BuyPage() {
             {/* Token Prices */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5" />
+                <CardTitle>
                   Token Prices
                 </CardTitle>
               </CardHeader>
@@ -470,8 +467,7 @@ export default function BuyPage() {
             {/* Contract Information */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <AlertCircle className="w-5 h-5" />
+                <CardTitle>
                   Contract Info
                 </CardTitle>
               </CardHeader>

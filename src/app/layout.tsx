@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Russo_One } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { Navigation } from "@/components/Navigation";
@@ -14,6 +14,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const russoOne = Russo_One({
+  variable: "--font-russo-one",
+  subsets: ["latin"],
+  weight: "400",
+});
+
 export const metadata: Metadata = {
   title: "LUXPLAY - Web3 DeFi Staking Platform",
   description: "Earn rewards with multi-level staking, referral programs, and networking in the LUXPLAY DeFi ecosystem",
@@ -25,18 +31,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark" style={{ colorScheme: 'dark' }} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased dark`}
+        className={`${geistSans.variable} ${geistMono.variable} ${russoOne.variable} antialiased`}
         suppressHydrationWarning
       >
         <Providers>
-          <div className="relative z-10">
-            <Navigation />
-            <main className="min-h-screen relative">
-              {children}
-            </main>
-          </div>
+          <Navigation />
+          <main className="min-h-screen relative bg-grainy-gradient">
+            {children}
+          </main>
         </Providers>
       </body>
     </html>

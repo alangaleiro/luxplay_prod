@@ -32,8 +32,9 @@ function Badge({
   ...props
 }: React.ComponentProps<"span"> &
   VariantProps<typeof badgeVariants> & { asChild?: boolean }) {
-  // Use button if onClick is provided, otherwise use span
-  const Comp = asChild ? Slot : (props.onClick ? "button" : "span") as any
+  // Always use span to prevent hydration mismatch
+  // Use asChild with Slot if you need button functionality
+  const Comp = asChild ? Slot : "span"
 
   return (
     <Comp

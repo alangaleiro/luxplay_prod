@@ -42,75 +42,18 @@ export function BackgroundProvider({
 }: BackgroundProviderProps) {
   const [settings, setSettings] = useState<BackgroundSettings>({
     enabled: true,
-    type: 'grainy-gradient', // Default to grainy gradient from background.md
+    type: 'grainy-gradient',
     opacity: 0.4,
     intensity: 1.0,
     showOnPage: true,
     ...defaultSettings
   });
 
-  const [isClientMounted, setIsClientMounted] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  // Client-side mounting detection for SSR safety
   useEffect(() => {
-    setIsClientMounted(true);
+    setMounted(true);
   }, []);
-
-  // Load settings from localStorage on mount
-  useEffect(() => {
-    if (!isClientMounted) return;
-    
-    try {
-      const savedSettings = localStorage.getItem('luxplay-background-settings');
-      if (savedSettings) {
-        const parsed = JSON.parse(savedSettings);
-        setSettings(prev => ({ ...prev, ...parsed }));
-      }
-    } catch (error) {
-      console.error('Failed to parse LUXPLAY background settings from localStorage:', error);
-    }
-  }, [isClientMounted]);
-
-  // Save settings to localStorage when they change
-  useEffect(() => {
-    if (!isClientMounted) return;
-    
-    try {
-      localStorage.setItem('luxplay-background-settings', JSON.stringify(settings));
-    } catch (error) {
-      console.warn('Failed to save background settings to localStorage:', error);
-    }
-  }, [settings, isClientMounted]);
-
-  // Update body background based on settings for dark mode
-  useEffect(() => {
-    if (!isClientMounted) return;
-    
-    try {
-      const body = document.body;
-      if (settings.enabled && settings.showOnPage) {
-        if (settings.type === 'grainy-gradient') {
-          // Apply grainy gradient background class
-          body.classList.add('bg-grainy-gradient');
-          body.style.background = '';
-        } else {
-          // Transparent body for other background types
-          body.classList.remove('bg-grainy-gradient');
-          body.style.background = 'transparent';
-        }
-      } else {
-        // Fallback to LUXPLAY dark theme background when disabled
-        body.classList.remove('bg-grainy-gradient');
-        body.style.background = 'hsl(var(--background))';
-      }
-    } catch (error) {
-      console.warn('[BackgroundProvider] Failed to update body background:', error);
-      // Fallback to default background
-      if (typeof document !== 'undefined') {
-        document.body.style.background = 'hsl(var(--background))';
-      }
-    }
-  }, [settings.enabled, settings.showOnPage, settings.type, isClientMounted]);
 
   const updateSettings = (newSettings: Partial<BackgroundSettings>) => {
     setSettings(prev => ({ ...prev, ...newSettings }));
@@ -136,8 +79,7 @@ export function BackgroundProvider({
     setBackgroundType,
   };
 
-  // Prevent rendering background components during SSR
-  if (!isClientMounted) {
+  if (!mounted) {
     return (
       <BackgroundContext.Provider value={value}>
         <div className="relative z-10">
@@ -149,17 +91,11 @@ export function BackgroundProvider({
 
   return (
     <BackgroundContext.Provider value={value}>
-      {/* Render background based on type if enabled and should show on page */}
-      {settings.enabled && settings.showOnPage && (
-        <>
-          {settings.type === 'neural-vortex' && (
-            <InteractiveNeuralVortex 
-              opacity={settings.opacity}
-              intensity={settings.intensity}
-            />
-          )}
-          {/* Grainy gradient is applied via body class, no component needed */}
-        </>
+      {settings.enabled && settings.showOnPage && settings.type === 'neural-vortex' && (
+        <InteractiveNeuralVortex 
+          opacity={settings.opacity}
+          intensity={settings.intensity}
+        />
       )}
       <div className="relative z-10">
         {children}
@@ -168,21 +104,15 @@ export function BackgroundProvider({
   );
 }
 
-// Hook for pages to control their background visibility
 export const usePageBackground = (showBackground: boolean = true) => {
   const { setPageBackground } = useBackground();
   
   useEffect(() => {
     setPageBackground(showBackground);
-    
-    // Cleanup: restore background when component unmounts
-    return () => {
-      setPageBackground(true);
-    };
+    return () => setPageBackground(true);
   }, [showBackground, setPageBackground]);
 };
 
-// Component for pages that want to explicitly control background
 interface PageBackgroundProps {
   show?: boolean;
   type?: BackgroundType;
@@ -208,7 +138,6 @@ export function PageBackground({
     
     updateSettings(updates);
     
-    // Cleanup: restore default settings when component unmounts
     return () => {
       updateSettings({ 
         showOnPage: true, 

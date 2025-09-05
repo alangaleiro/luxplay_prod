@@ -5,7 +5,7 @@ import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { WalletSection } from '@/components/WalletSection';
 import { 
   Sheet, 
   SheetContent, 
@@ -23,9 +23,12 @@ import {
   ExternalLink,
   ChevronDown,
   CheckCircle,
-  ArrowUpDown
+  ArrowUpDown,
+  RefreshCw
 } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { useCheckpoint } from '../../hooks/useActivePool';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface NavigationItem {
   name: string;
@@ -68,6 +71,14 @@ export function Navigation() {
   const { address, isConnected, isConnecting } = useAccount();
   const { connect, connectors, isPending } = useConnect();
   const { disconnect } = useDisconnect();
+  const { isAuthenticated, isRegistered } = useAuth();
+
+  // Sync Data logic
+  const { checkpoint, isPending: isCheckpointPending } = useCheckpoint();
+
+  const handleSync = () => {
+    checkpoint();
+  };
 
   const handleConnect = (connector: any) => {
     try {
@@ -136,55 +147,15 @@ export function Navigation() {
 
                 {/* Wallet Section */}
                 <div className="border-t pt-6">
-                  {!isConnected ? (
-                    <div className="space-y-3">
-                      <h4 className="font-medium text-sm">Connect Wallet</h4>
-                      {connectors.map((connector) => (
-                        <Button
-                          key={connector.id}
-                          variant="outline"
-                          className="w-full justify-start"
-                          onClick={() => handleConnect(connector)}
-                          disabled={isPending || isConnecting}
-                        >
-                          {isPending || isConnecting ? (
-                            <LoadingSpinner size="sm" className="mr-2" />
-                          ) : (
-                            <Wallet className="mr-2 h-4 w-4" />
-                          )}
-                          {connector.name}
-                        </Button>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <h4 className="font-medium text-sm">Connected Wallet</h4>
-                      <div className="p-3 bg-secondary/50 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <Badge variant="secondary">
-                            {address?.slice(0, 6)}...{address?.slice(-4)}
-                          </Badge>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              navigator.clipboard.writeText(address || '');
-                            }}
-                          >
-                            <ExternalLink className="w-3 h-3" />
-                          </Button>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full"
-                          onClick={handleDisconnect}
-                        >
-                          Disconnect
-                        </Button>
-                      </div>
-                    </div>
-                  )}
+                  <WalletSection
+                    connectors={connectors}
+                    isPending={isPending}
+                    isConnecting={isConnecting}
+                    handleConnect={handleConnect}
+                    isAuthenticated={isAuthenticated}
+                    isRegistered={isRegistered}
+                    pathname={pathname}
+                  />
                 </div>
               </div>
             </SheetContent>
@@ -218,40 +189,15 @@ export function Navigation() {
 
         {/* Desktop Wallet Section */}
         <div className="hidden lg:flex items-center gap-4">
-          {!isConnected ? (
-            <div className="flex items-center gap-2">
-              {connectors.slice(0, 1).map((connector) => (
-                <Button
-                  key={connector.id}
-                  onClick={() => handleConnect(connector)}
-                  className="gap-2"
-                  disabled={isPending || isConnecting}
-                >
-                  {isPending || isConnecting ? (
-                    <LoadingSpinner size="sm" className="mr-2" />
-                  ) : (
-                    <Wallet className="w-4 h-4" />
-                  )}
-                  Connect Wallet
-                </Button>
-              ))}
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Badge 
-                variant="secondary" 
-                className="px-3 py-1 cursor-pointer hover:bg-secondary/80"
-                onClick={() => {
-                  navigator.clipboard.writeText(address || '');
-                }}
-              >
-                {address?.slice(0, 6)}...{address?.slice(-4)}
-              </Badge>
-              <Button variant="outline" size="sm" onClick={handleDisconnect}>
-                Disconnect
-              </Button>
-            </div>
-          )}
+          <WalletSection
+            connectors={connectors}
+            isPending={isPending}
+            isConnecting={isConnecting}
+            handleConnect={handleConnect}
+            isAuthenticated={isAuthenticated}
+            isRegistered={isRegistered}
+            pathname={pathname}
+          />
         </div>
       </div>
     </header>

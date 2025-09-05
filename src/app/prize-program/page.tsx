@@ -29,7 +29,16 @@ import { useTokenBalance, useEnsureAllowance, useTokenApprove } from '../../../h
 import { useFormState, useNotify } from '../../../hooks/useStore';
 
 // Import utilities
-import { toWei, fromWei, formatUSD, planEpochRatePct, safeFromWei, formatEpochCountdown } from '../../../lib/utils';
+import { formatEpochCountdown } from '../../../lib/utils';
+import { SlidingNumber } from '@/components/core/sliding-number';
+
+// Import utilities
+import { toWei, fromWei, formatUSD, planEpochRatePct, safeFromWei } from '../../../lib/utils';
+
+// Helper function to format PLAY amounts
+const formatPlayAmount = (amount: bigint): string => {
+  return Number(fromWei(amount)).toFixed(4);
+};
 import { CONTRACT_ADDRESSES } from '../../../lib/contracts';
 import { PlanId } from '../../../lib/types';
 
@@ -45,6 +54,54 @@ import {
   Coins,
   Wallet
 } from 'lucide-react';
+
+interface CountdownClockProps {
+  seconds: number | undefined;
+}
+
+function CountdownClock({ seconds }: CountdownClockProps) {
+  const [currentSeconds, setCurrentSeconds] = useState<number | undefined>(seconds);
+
+  useEffect(() => {
+    setCurrentSeconds(seconds);
+  }, [seconds]);
+
+  useEffect(() => {
+    if (currentSeconds === undefined || currentSeconds <= 0) return;
+
+    const interval = setInterval(() => {
+      setCurrentSeconds(prev => {
+        if (prev === undefined || prev <= 0) return 0;
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [currentSeconds]);
+
+  if (currentSeconds === undefined) {
+    return <span>Loading...</span>;
+  }
+
+  const totalSeconds = Math.max(0, currentSeconds);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const remainingSeconds = totalSeconds % 60;
+
+  return (
+    <div className='flex items-center justify-center gap-0.5 font-mono text-2xl'>
+      {hours > 0 && (
+        <>
+          <SlidingNumber value={hours} padStart={true} />
+          <span className='text-muted-foreground'>:</span>
+        </>
+      )}
+      <SlidingNumber value={minutes} padStart={true} />
+      <span className='text-muted-foreground'>:</span>
+      <SlidingNumber value={remainingSeconds} padStart={true} />
+    </div>
+  );
+}
 
 export default function PrizeProgramPage() {
   const [mode, setMode] = useState<'burn' | 'redeem'>('burn');
@@ -468,7 +525,7 @@ export default function PrizeProgramPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-4">
-      <div className="text-center space-y-2">
+      <div className="space-y-2">
         <h1 className="text-3xl font-bold">Prize Program</h1>
         <p className="text-muted-foreground">
           Earn rewards with our multi-level staking system
@@ -479,7 +536,7 @@ export default function PrizeProgramPage() {
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
-            <CardTitle>Action</CardTitle>
+            <CardTitle className="card-title-large card-title-centered">Action</CardTitle>
 
           </div>
         </CardHeader>
@@ -548,8 +605,8 @@ export default function PrizeProgramPage() {
           </div>
           
           {mode === 'burn' && (
-            <div className="flex gap-2">
-              <div className="flex-1">
+            <div className="flex gap-2 items-start">
+              <div>
                 <Select 
                   value={String(selectedPlan)} 
                   onValueChange={(v) => setSelectedPlan(Number(v) as PlanId)}
@@ -589,113 +646,116 @@ export default function PrizeProgramPage() {
         </CardContent>
       </Card>
 
-      {/* Countdown + Global */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="w-5 h-5" />
-              Next Rebase
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            ⏱ {summary?.countdownSec !== undefined ? formatEpochCountdown(summary.countdownSec) : 'Loading...'}
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex justify-between items-center">
-            <CardTitle className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5" />
+      {/* Top Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className="bg-gradient-to-b from-neutral-900 to-indigo-900">
+          <CardHeader className="flex justify-between items-center card-content">
+            <CardTitle className="card-title-large">
               Global Total Active
             </CardTitle>
-            <Button 
-              onClick={handleSync} 
-              disabled={isCheckpointPending}
-              variant="outline"
-              size="sm"
-            >
-              {isCheckpointPending ? (
-                <>
-                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current mr-1"></div>
-                  Syncing...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="w-3 h-3 mr-1" />
-                  Sync Data
-                </>
-              )}
-            </Button>
           </CardHeader>
-          <CardContent>
+          <CardContent className="text-center font-mono card-content">
             <div className="space-y-1">
-              <Badge variant="secondary">
-                {isClientMounted && (summary?.globalActiveTokens || totalActive) ? (
-                  formatUSD(Number(fromWei(((summary?.globalActiveTokens as bigint) || (totalActive as bigint)) || 0n)) * Number(price || 0))
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
-                    Loading...
-                  </div>
-                )}
-              </Badge>
-              {isClientMounted && ((summary?.globalActiveTokens as bigint) || (totalActive as bigint)) && (
-                <div className="text-xs text-muted-foreground">
-                  {Number(fromWei(((summary?.globalActiveTokens as bigint) || (totalActive as bigint)) || 0n)).toFixed(4)} PLAY
+              {isClientMounted && (summary?.globalActiveTokens || totalActive) ? (
+                <div className="text-2xl font-bold font-mono">
+                  {formatPlayAmount(((summary?.globalActiveTokens as bigint) || (totalActive as bigint)) || 0n)} PLAY
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Metrics */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5" />
-              APY Plan
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div>
-                Current plan rate (per-epoch): {planEpochRatePct(selectedPlan).toFixed(4)}%
-              </div>
-              {summary?.userPlan !== undefined && (
-                <div className="text-sm text-muted-foreground">
-                  Your active plan: {summary.userPlan === 0 ? '400%' : summary.userPlan === 1 ? '750%' : '1400%'} APY
+              ) : (
+                <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
+                  Loading...
                 </div>
               )}
             </div>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-gradient-to-b from-neutral-900 to-indigo-900">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Zap className="w-5 h-5" />
+            <CardTitle className="card-title-large">
               Staked
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            {Number(fromWei(summary?.burned || 0n)).toFixed(4)} PLAY
+          <CardContent className="text-center font-mono">
+            <div className="text-2xl font-bold font-mono">
+              {Number(fromWei(summary?.burned || 0n)).toFixed(4)} PLAY
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-b from-neutral-900 to-indigo-900">
+          <CardHeader>
+            <CardTitle className="card-title-large">
+              Active Prize
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center font-mono">
+            <div className="text-2xl font-bold font-mono">
+              {Number(fromWei(summary?.activePrize || 0n)).toFixed(4)} PLAY
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Claimable + Active Prize */}
+      {/* Countdown + APY Plan */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="card-title-large">
+              Next Rebase
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center font-mono">
+            <CountdownClock seconds={summary?.countdownSec} />
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle className="card-title-large">
+              APY Plan
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center font-mono">
+            <div className="space-y-2">
+              <div className="text-2xl font-bold font-mono">
+                {planEpochRatePct(selectedPlan).toFixed(4)}%
+              </div>
+              {summary?.userPlan !== undefined && (
+                <div className="text-sm text-muted-foreground">
+                  {summary.userPlan === 0 ? '400%' : summary.userPlan === 1 ? '750%' : '1400%'} APY
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Claimable + Warmup */}
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader className="flex justify-between items-center">
-            <CardTitle className="flex items-center gap-2">
-              <Coins className="w-5 h-5" />
+            <CardTitle className="card-title-large">
               Claimable
             </CardTitle>
-            <Button 
-              onClick={() => claimRewards((summary?.claimable as bigint) || 0n)} 
+          </CardHeader>
+          <CardContent className="text-center font-mono">
+            <div className="space-y-1">
+              <div className="text-2xl font-bold font-mono">
+                {isClientMounted && summary?.claimable !== undefined ? (
+                  `${formatPlayAmount((summary.claimable as bigint) || 0n)} PLAY`
+                ) : (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                    Loading...
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-end">
+            <Button
+              onClick={() => claimRewards((summary?.claimable as bigint) || 0n)}
               disabled={isClaimPending || !summary?.claimable || (summary.claimable as bigint) <= 0n}
               variant="outline"
               size="sm"
@@ -709,42 +769,12 @@ export default function PrizeProgramPage() {
                 'Claim'
               )}
             </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1">
-              <div className="text-2xl font-bold">
-                {isClientMounted && summary?.claimable !== undefined ? (
-                  `${Number(fromWei((summary.claimable as bigint) || 0n)).toFixed(4)} PLAY`
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
-                    Loading...
-                  </div>
-                )}
-              </div>
-            </div>
-          </CardContent>
+          </CardFooter>
         </Card>
         
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Wallet className="w-5 h-5" />
-              Active Prize
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {Number(fromWei(summary?.activePrize || 0n)).toFixed(4)} PLAY
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Warmup & Yield */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
           <CardHeader className="flex justify-between items-center">
-            <CardTitle className="flex items-center gap-2">
-              <Timer className="w-5 h-5" />
+            <CardTitle className="card-title-large">
               Warmup
             </CardTitle>
             <Button 
@@ -766,23 +796,27 @@ export default function PrizeProgramPage() {
               )}
             </Button>
           </CardHeader>
-          <CardContent>
-            Warmup: {Number(fromWei(summary?.warmupAmount || 0n)).toFixed(4)} | Active: {Number(fromWei(summary?.activeAmount || 0n)).toFixed(4)}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5" />
-              Yield Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            Next Epoch Yield: {planEpochRatePct(selectedPlan).toFixed(4)}% • Next Prize Amount: {nextPrizeAmount.toFixed(4)} PLAY
+          <CardContent className="text-center font-mono">
+            <div className="text-2xl font-bold font-mono">
+              Warmup: {formatPlayAmount(summary?.warmupAmount || 0n)} PLAY
+            </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Yield Information - Full Width */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="card-title-large">
+            Yield Information
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-center font-mono">
+          <div className="text-2xl font-bold font-mono">
+            Next Prize Amount: {formatPlayAmount(BigInt(Math.floor(nextPrizeAmount * (10**18))))} PLAY
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

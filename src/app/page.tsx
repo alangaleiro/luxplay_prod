@@ -77,21 +77,7 @@ export default function HomePage() {
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               {!isConnected ? (
-                <>
-                  <Button 
-                    size="lg" 
-                    className="text-lg px-8" 
-                    onClick={handleConnectWallet}
-                  >
-                    <Wallet className="mr-2 h-5 w-5" />
-                    Get Started
-                  </Button>
-                  <Button size="lg" variant="outline" className="text-lg px-8" asChild>
-                    <Link href="/prize-program">
-                      Learn More
-                    </Link>
-                  </Button>
-                </>
+                null // No buttons when not connected
               ) : (
                 <>
                   <Button size="lg" className="text-lg px-8" asChild>

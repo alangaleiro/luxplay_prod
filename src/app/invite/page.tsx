@@ -29,7 +29,7 @@ import { fromWei, formatUSD, safeFromWei } from '../../../lib/utils';
 import { CONTRACT_ADDRESSES } from '../../../lib/contracts';
 
 // Icons
-import { Users, DollarSign, TrendingUp, Zap, Gift } from 'lucide-react';
+import { Users, DollarSign, TrendingUp, Zap, Gift, Copy } from 'lucide-react';
 
 // APY Plan types
 type APYPlan = '400' | '750' | '1400';
@@ -51,34 +51,7 @@ export default function InviteProgramPage() {
   // APY Plan filter state
   const [selectedAPYPlan, setSelectedAPYPlan] = useState<APYPlan>('400');
 
-  // Redirect if not authenticated - enhanced logic to allow staying on invite page
-  useEffect(() => {
-    // Enhanced debug logging for redirect decisions
-    console.log('[DEBUG] Invite Program - Auth state check:', {
-      isLoading,
-      isAuthenticated,
-      isRegistered,
-      address: address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'undefined',
-      shouldRedirect: !isLoading && (!isAuthenticated || !isRegistered)
-    });
-
-    // Only redirect if we're not loading and either not authenticated or not registered
-    // If user is authenticated AND registered, let them stay on invite page
-    if (!isLoading && (!isAuthenticated || !isRegistered)) {
-      console.log('[DEBUG] Invite Program - User not authenticated or not registered, redirecting to connect page with returnTo parameter');
-      router.push('/connect?returnTo=/invite');
-    } else if (!isLoading && isAuthenticated && isRegistered) {
-      console.log('[DEBUG] Invite Program - User authenticated and registered, staying on invite page');
-      // User is fully authenticated and registered - stay on invite page
-    }
-  }, [isAuthenticated, isRegistered, isLoading, router, address]);
-
-  // Show loading if checking auth
-  if (isLoading || !isAuthenticated || !isRegistered) {
-    return <PageLoader message="Checking authentication..." />;
-  }
-
-  // Active Pool hooks
+  // Active Pool hooks - MUST be called before any conditional returns
   const { 
     claimReferralRewards, 
     isPending: isClaimPending,
@@ -139,7 +112,7 @@ export default function InviteProgramPage() {
 
   const filteredDownlineStakes = getFilteredDownlineStakes();
 
-  // Debug logging for invite page data
+  // Debug logging for invite page data (simplified to avoid hook order issues)
   useEffect(() => {
     console.log('[DEBUG] ===== INVITE PAGE DATA STATE =====');
     console.log('[DEBUG] Basic Info:', {
@@ -157,43 +130,26 @@ export default function InviteProgramPage() {
     console.log('[DEBUG] ACTIVE_POOL Hooks (ISSUE):', {
       userInfo: {
         data: userInfo ? (Array.isArray(userInfo) ? `Array(${userInfo.length})` : 'Object') : 'undefined',
-        rawData: userInfo,
-        principal: (userInfo as any)?.[1]?.toString() || 'undefined',
         isLoading: isUserInfoLoading
       },
       userTotals: {
         data: userTotals ? (Array.isArray(userTotals) ? `Array(${userTotals.length})` : 'Object') : 'undefined',
-        rawData: userTotals,
-        cap2xMax: cap2xMax.toString(),
-        referralReceived: referralReceived.toString(),
-        remainingReferralCap: remainingReferralCap.toString(),
-        remainingCapFormatted: `${Number(fromWei(remainingReferralCap)).toFixed(4)} PLAY`,
         isLoading: isUserTotalsLoading
       },
       pendingRewards: {
         data: pendingRewards?.toString() || 'undefined',
-        rawData: pendingRewards,
         isLoading: isPendingRewardsLoading
       },
       totalReferralReceived: {
         data: totalReferralReceived?.toString() || 'undefined',
-        rawData: totalReferralReceived,
         isLoading: isTotalReferralLoading
       },
       referralCap: {
         data: referralCap ? (Array.isArray(referralCap) ? `Array(${referralCap.length})` : 'Object') : 'undefined',
-        rawData: referralCap,
         isLoading: isReferralCapLoading
       },
       downlineStakes: {
         data: downlineStakes ? (Array.isArray(downlineStakes) ? `Array(${downlineStakes.length})` : 'Object') : 'undefined',
-        structure: downlineStakes && Array.isArray(downlineStakes) ? {
-          plan0_400APY: downlineStakes[0] ? `Array(${Array.isArray(downlineStakes[0]) ? downlineStakes[0].length : 'not array'})` : 'undefined',
-          plan1_750APY: downlineStakes[1] ? `Array(${Array.isArray(downlineStakes[1]) ? downlineStakes[1].length : 'not array'})` : 'undefined',
-          plan2_1400APY: downlineStakes[2] ? `Array(${Array.isArray(downlineStakes[2]) ? downlineStakes[2].length : 'not array'})` : 'undefined'
-        } : 'N/A',
-        selectedAPYPlan,
-        filteredData: filteredDownlineStakes ? `Array(${filteredDownlineStakes.length})` : 'undefined',
         isLoading: isDownlineStakesLoading
       }
     });
@@ -257,17 +213,52 @@ export default function InviteProgramPage() {
   const referralReceived = userTotals && Array.isArray(userTotals) ? (userTotals[5] as bigint) : 0n;
   const remainingReferralCap = cap2xMax > referralReceived ? cap2xMax - referralReceived : 0n;
 
-  // Debug the calculation values
-  console.log('[DEBUG] Remaining Cap Calculation:', {
-    cap2xMax: cap2xMax.toString(),
-    referralReceived: referralReceived.toString(),
-    remainingReferralCap: remainingReferralCap.toString(),
-    remainingReferralCapPLAY: Number(fromWei(remainingReferralCap)).toFixed(4),
-    price: price?.toString() || 'undefined',
-    priceNumber: Number(price || 0),
-    calculatedUSD: Number(fromWei(remainingReferralCap)) * Number(price || 0),
-    formattedUSD: formatUSD(Number(fromWei(remainingReferralCap)) * Number(price || 0))
-  });
+  // Redirect if not authenticated - enhanced logic to allow staying on invite page
+  useEffect(() => {
+    // Enhanced debug logging for redirect decisions
+    console.log('[DEBUG] Invite Program - Auth state check:', {
+      isLoading,
+      isAuthenticated,
+      isRegistered,
+      address: address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'undefined',
+      shouldRedirect: !isLoading && (!isAuthenticated || !isRegistered)
+    });
+
+    // Only redirect if we're not loading and either not authenticated or not registered
+    // If user is authenticated AND registered, let them stay on invite page
+    if (!isLoading && (!isAuthenticated || !isRegistered)) {
+      console.log('[DEBUG] Invite Program - User not authenticated or not registered, redirecting to connect page with returnTo parameter');
+      router.push('/connect?returnTo=/invite');
+    } else if (!isLoading && isAuthenticated && isRegistered) {
+      console.log('[DEBUG] Invite Program - User authenticated and registered, staying on invite page');
+      // User is fully authenticated and registered - stay on invite page
+    }
+  }, [isAuthenticated, isRegistered, isLoading, router, address]);
+
+  // Show loading if checking auth
+  if (isLoading || !isAuthenticated || !isRegistered) {
+    return <PageLoader message="Checking authentication..." />;
+  }
+
+  // Debug the calculation values (moved to avoid hook order issues)
+  useEffect(() => {
+    if (userTotals && Array.isArray(userTotals)) {
+      const cap2xMax = userTotals[3] as bigint;
+      const referralReceived = userTotals[5] as bigint;
+      const remainingReferralCap = cap2xMax > referralReceived ? cap2xMax - referralReceived : 0n;
+      
+      console.log('[DEBUG] Remaining Cap Calculation:', {
+        cap2xMax: cap2xMax.toString(),
+        referralReceived: referralReceived.toString(),
+        remainingReferralCap: remainingReferralCap.toString(),
+        remainingReferralCapPLAY: Number(fromWei(remainingReferralCap)).toFixed(4),
+        price: price?.toString() || 'undefined',
+        priceNumber: Number(price || 0),
+        calculatedUSD: Number(fromWei(remainingReferralCap)) * Number(price || 0),
+        formattedUSD: formatUSD(Number(fromWei(remainingReferralCap)) * Number(price || 0))
+      });
+    }
+  }, [userTotals, price]);
 
   // Unlock thresholds with filtered data
   const unlockThresholds = Array.from({ length: 15 }, (_, i) => ({
@@ -284,7 +275,7 @@ export default function InviteProgramPage() {
 
   return (
     <div className="container mx-auto py-8 max-w-6xl">
-      <div className="text-center space-y-2 mb-8">
+      <div className="space-y-2 mb-8">
         <h1 className="text-3xl font-bold">Invite Program</h1>
         <p className="text-muted-foreground">
           Build your network and earn from referrals
@@ -300,271 +291,269 @@ export default function InviteProgramPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Invite Section */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5" />
-                Invite Program
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {isNewUser ? (
-                <div className="text-center py-4 space-y-3">
-                  <div className="text-muted-foreground">
-                    👋 Welcome to LuxPlay!
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    You haven't made any deposits yet. Start by staking PLAY tokens in the Prize Program to unlock referral rewards.
-                  </p>
-                  <Button 
-                    onClick={() => router.push('/prize-program')}
-                    className="mt-2"
-                  >
-                    Start Staking PLAY
-                  </Button>
+      {/* Top Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-3 mb-8">
+        <Card className="bg-gradient-to-b from-neutral-900 to-indigo-900">
+          <CardHeader>
+            <CardTitle className="card-title-large">
+              My Total Staked
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center font-mono">
+            <div className="text-2xl font-bold font-mono">
+              {isUserInfoLoading ? (
+                <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
+                  Loading...
                 </div>
               ) : (
+                `${fromWei(burned || 0n)} PLAY`
+              )}
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-gradient-to-b from-neutral-900 to-indigo-900">
+          <CardHeader className="flex justify-between items-center">
+            <CardTitle className="card-title-large">
+              Available
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center font-mono">
+            <div className="text-2xl font-bold font-mono">
+              {isPendingRewardsLoading ? (
+                <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
+                  Loading...
+                </div>
+              ) : (
+                `${fromWei((pendingRewards as bigint) || 0n)} PLAY`
+              )}
+            </div>
+          </CardContent>
+          <CardFooter className="flex justify-end">
+            <Button 
+              onClick={handleClaim}
+              disabled={isClaimPending || !pendingRewards || (pendingRewards as bigint) <= 0n}
+              variant="outline"
+              size="sm"
+            >
+              {isClaimPending ? (
                 <>
-                  <div className="flex items-center justify-between">
-                    <div>My Total Staked</div>
-                    <Badge variant="secondary">
-                      {isUserInfoLoading ? (
-                        <div className="flex items-center gap-2">
-                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
-                          Loading...
-                        </div>
-                      ) : (
-                        fromWei(burned || 0n) + ' PLAY'
-                      )}
-                    </Badge>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>Available</div>
-                    <div className="flex gap-2 items-center">
-                      <Badge variant="secondary">
-                        {isPendingRewardsLoading ? (
-                          <div className="flex items-center gap-2">
-                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
-                            Loading...
-                          </div>
-                        ) : (
-                          fromWei((pendingRewards as bigint) || 0n) + ' PLAY'
-                        )}
-                      </Badge>
-                      <Button 
-                        onClick={handleClaim}
-                        disabled={isClaimPending || !pendingRewards || (pendingRewards as bigint) <= 0n}
-                        size="sm"
-                      >
-                        {isClaimPending ? (
-                          <>
-                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-1"></div>
-                            Claiming...
-                          </>
-                        ) : (
-                          'Claim'
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>Total Received</div>
-                    <Badge variant="secondary">
-                      {isTotalReferralLoading ? (
-                        <div className="flex items-center gap-2">
-                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
-                          Loading...
-                        </div>
-                      ) : (
-                        fromWei((totalReferralReceived as bigint) || 0n) + ' PLAY'
-                      )}
-                    </Badge>
-                  </div>
-                  
-                  <div className="pt-2 text-sm text-muted-foreground">
-                    Remaining Cap: {isUserTotalsLoading ? (
-                      <span className="inline-flex items-center gap-1">
-                        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
-                        Loading...
-                      </span>
-                    ) : (
-                      <>
-                        {Number(fromWei(remainingReferralCap)).toFixed(4)} PLAY 
-                        ({formatUSD(Number(fromWei(remainingReferralCap)) * Number(price || 0))})
-                      </>
-                    )} 
-                    (approx)
-                  </div>
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current mr-1"></div>
+                  Claiming...
                 </>
+              ) : (
+                'Claim'
               )}
-            </CardContent>
-          </Card>
-
-          {/* Limits Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="w-5 h-5" />
-                Limits
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isNewUser ? (
-                <div className="text-center py-4">
-                  <p className="text-sm text-muted-foreground">
-                    Your referral limits will appear here once you start staking PLAY tokens.
-                  </p>
-                </div>
-              ) : hasDepositsButNoReferrals ? (
-                <div className="text-center py-4 space-y-2">
-                  <p className="text-sm text-muted-foreground">
-                    🎯 Referral cap is being calculated based on your {fromWei(burned)} PLAY stake.
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Your referral earning limits will be set once you invite your first user.
-                  </p>
+            </Button>
+          </CardFooter>
+        </Card>
+        
+        <Card className="bg-gradient-to-b from-neutral-900 to-indigo-900">
+          <CardHeader>
+            <CardTitle className="card-title-large">
+              Total Received
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center font-mono">
+            <div className="text-2xl font-bold font-mono">
+              {isTotalReferralLoading ? (
+                <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
+                  Loading...
                 </div>
               ) : (
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span>Current Cap:</span>
-                    <span>
-                      {isUserTotalsLoading ? (
-                        <div className="flex items-center gap-2">
-                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
-                          Loading...
-                        </div>
-                      ) : (
-                        <>
-                          {Number(fromWei(cap2xMax)).toFixed(4)} PLAY 
-                          ({formatUSD(Number(fromWei(cap2xMax)) * Number(price || 0))})
-                        </>
-                      )}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Remaining:</span>
-                    <span>
-                      {isUserTotalsLoading ? (
-                        <div className="flex items-center gap-2">
-                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
-                          Loading...
-                        </div>
-                      ) : (
-                        <>
-                          {Number(fromWei(remainingReferralCap)).toFixed(4)} PLAY 
-                          ({formatUSD(Number(fromWei(remainingReferralCap)) * Number(price || 0))})
-                        </>
-                      )}
-                    </span>
-                  </div>
-                  <div className="w-full bg-secondary rounded-full h-2">
-                    <div 
-                      className="bg-primary h-2 rounded-full" 
-                      style={{ 
-                        width: `${cap2xMax > 0n ? Math.min(100, (Number(referralReceived) / Number(cap2xMax)) * 100) : 0}%` 
-                      }}
-                    ></div>
-                  </div>
-                  <div className="text-right text-sm text-muted-foreground">
-                    {cap2xMax > 0n ? ((Number(referralReceived) / Number(cap2xMax)) * 100).toFixed(2) : '0.00'}% used
-                  </div>
-                </div>
+                `${fromWei((totalReferralReceived as bigint) || 0n)} PLAY`
               )}
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-        {/* Networking Section */}
-        <div className="space-y-6">
+      {/* Limits Card - Full Width */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="card-title-large">
+            Limits
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isNewUser ? (
+            <div className="text-center py-4">
+              <p className="text-sm text-muted-foreground">
+                Your referral limits will appear here once you start staking PLAY tokens.
+              </p>
+            </div>
+          ) : hasDepositsButNoReferrals ? (
+            <div className="text-center py-4 space-y-2">
+              <p className="text-sm text-muted-foreground">
+                🎯 Referral cap is being calculated based on your {fromWei(burned)} PLAY stake.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Your referral earning limits will be set once you invite your first user.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span>Current Cap:</span>
+                <span>
+                  {isUserTotalsLoading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
+                      Loading...
+                    </div>
+                  ) : (
+                    <>
+                      {Number(fromWei(cap2xMax)).toFixed(4)} PLAY 
+                      ({formatUSD(Number(fromWei(cap2xMax)) * Number(price || 0))})
+                    </>
+                  )}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>Remaining:</span>
+                <span>
+                  {isUserTotalsLoading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
+                      Loading...
+                    </div>
+                  ) : (
+                    <>
+                      {Number(fromWei(remainingReferralCap)).toFixed(4)} PLAY 
+                      ({formatUSD(Number(fromWei(remainingReferralCap)) * Number(price || 0))})
+                    </>
+                  )}
+                </span>
+              </div>
+              <div className="w-full bg-secondary rounded-full h-2">
+                <div 
+                  className="bg-primary h-2 rounded-full" 
+                  style={{ 
+                    width: `${cap2xMax > 0n ? Math.min(100, (Number(referralReceived) / Number(cap2xMax)) * 100) : 0}%` 
+                  }}
+                ></div>
+              </div>
+              <div className="text-right text-sm text-muted-foreground">
+                {cap2xMax > 0n ? ((Number(referralReceived) / Number(cap2xMax)) * 100).toFixed(2) : '0.00'}% used
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Referrer and Referral Link Section */}
+      <div className="grid gap-4 md:grid-cols-2 mb-8">
+        {/* Your Referrer */}
+        {networkingData?.referrer && typeof networkingData.referrer === 'string' && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5" />
-                Networking (Affiliate Structure)
+              <CardTitle className="card-title-large">
+                Your Referrer
               </CardTitle>
-              
-              {/* APY Plan Filter Buttons */}
-              <div className="flex flex-wrap gap-2 pt-4">
-                {APY_PLANS.map((plan) => (
-                  <Button
-                    key={plan.id}
-                    variant={selectedAPYPlan === plan.id ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSelectedAPYPlan(plan.id)}
-                    className={`${selectedAPYPlan === plan.id ? 'bg-primary text-primary-foreground' : ''}`}
-                  >
-                    {plan.label}
-                  </Button>
-                ))}
-              </div>
-              
-              {/* Show current filter info */}
-              <div className="text-sm text-muted-foreground">
-                Showing stake volumes for {APY_PLANS.find(p => p.id === selectedAPYPlan)?.label} plan
-              </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {unlockThresholds.map((item) => (
-                  <div 
-                    key={item.level} 
-                    className="flex items-center justify-between p-3 rounded-lg border"
-                  >
-                    <div className="space-y-1">
-                      <div className="font-medium">Level {item.level}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {item.users} users • {fromWei(item.volume)} PLAY volume
-                        {item.totalVolume !== item.volume && (
-                          <span className="text-xs text-muted-foreground block">
-                            (Total all plans: {fromWei(item.totalVolume)} PLAY)
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <Badge 
-                      variant={item.unlocked ? "default" : "secondary"}
-                      className={item.unlocked ? "bg-green-500" : ""}
-                    >
-                      {item.unlocked ? "Unlocked" : `Unlock at $${item.threshold}`}
-                    </Badge>
-                  </div>
-                ))}
+              <div className="flex items-center justify-between">
+                <span>Referrer Address:</span>
+                <Badge variant="secondary">
+                  {(networkingData.referrer as string).slice(0, 6)}...{(networkingData.referrer as string).slice(-4)}
+                </Badge>
               </div>
             </CardContent>
           </Card>
-
-          {/* Referrer Info */}
-          {(() => {
-            if (networkingData?.referrer && typeof networkingData.referrer === 'string') {
-              return (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Gift className="w-5 h-5" />
-                      Your Referrer
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <span>Referrer Address:</span>
-                      <Badge variant="secondary">
-                        {(networkingData.referrer as string).slice(0, 6)}...{(networkingData.referrer as string).slice(-4)}
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            }
-            return null;
-          })()}
-        </div>
+        )}
+        
+        {/* Your Referral Link */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="card-title-large">
+              Your Referral Link
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm font-mono truncate">
+                {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Not connected'}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (address) {
+                    navigator.clipboard.writeText(address);
+                    notify.success('Copied!', 'Referral link copied to clipboard');
+                  }
+                }}
+                disabled={!address}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                Copy
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Networking Section - Full Width */}
+      <Card className="mt-8">
+        <CardHeader>
+          <CardTitle className="card-title-large">
+            Networking (Affiliate Structure)
+          </CardTitle>
+          
+          {/* APY Plan Filter Buttons */}
+          <div className="flex flex-wrap gap-2 pt-4">
+            {APY_PLANS.map((plan) => (
+              <Button
+                key={plan.id}
+                variant={selectedAPYPlan === plan.id ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedAPYPlan(plan.id)}
+                className={`${selectedAPYPlan === plan.id ? 'bg-primary text-primary-foreground' : ''}`}
+              >
+                {plan.label}
+              </Button>
+            ))}
+          </div>
+          
+          {/* Show current filter info */}
+          <div className="text-sm text-muted-foreground">
+            Showing stake volumes for {APY_PLANS.find(p => p.id === selectedAPYPlan)?.label} plan
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {unlockThresholds.map((item) => (
+              <div 
+                key={item.level} 
+                className="flex items-center justify-between p-3 rounded-lg border"
+              >
+                <div className="space-y-1">
+                  <div className="font-medium">Level {item.level}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {item.users} users • {fromWei(item.volume)} PLAY volume
+                    {item.totalVolume !== item.volume && (
+                      <span className="text-xs text-muted-foreground block">
+                        (Total all plans: {fromWei(item.totalVolume)} PLAY)
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <Badge 
+                  variant={item.unlocked ? "default" : "secondary"}
+                  className={item.unlocked ? "bg-green-500" : ""}
+                >
+                  {item.unlocked ? "Unlocked" : `Unlock at $${item.threshold}`}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

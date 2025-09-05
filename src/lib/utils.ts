@@ -191,6 +191,26 @@ export const formatPercentage = (value: number, decimals = 2): string => {
 };
 
 /**
+ * Format a PLAY token amount with thousand separators and fixed decimal places.
+ * @param value - BigInt value in Wei
+ * @param decimals - Number of decimals (default: 18)
+ * @param displayDecimals - Number of decimals to display (default: 4)
+ * @returns Formatted string with thousand separators
+ */
+export const formatPlayAmount = (value: bigint, decimals = 18, displayDecimals = 4): string => {
+  if (!value) return '0.0000';
+
+  const numValue = Number(value) / (10 ** decimals); // Convert BigInt to number
+  
+  // Use toLocaleString for thousand separators and fixed decimal places
+  return numValue.toLocaleString('en-US', {
+    minimumFractionDigits: displayDecimals,
+    maximumFractionDigits: displayDecimals,
+    useGrouping: true // Ensure thousand separators
+  });
+};
+
+/**
  * Safe BigInt parsing from various types
  * @param value - Value to parse (string, number, bigint, or unknown)
  * @returns BigInt or 0n if parsing fails
