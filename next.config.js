@@ -1,8 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Suppress hydration warnings in development
+  // Experimental features
   experimental: {
-    suppressHydrationWarning: true,
+    turbo: {
+      rules: {
+        '*.svg': {
+          loaders: ['@svgr/webpack'],
+          as: '*.js',
+        },
+      },
+    },
   },
   
   // Enable webpack 5 for better performance
@@ -69,8 +76,7 @@ const nextConfig = {
   // Enable strict mode for better React performance
   reactStrictMode: false, // Disable to prevent double mounting in dev
 
-  // Enable SWC minification for better performance
-  swcMinify: true,
+
   
   // Custom dev server configuration
   ...(process.env.NODE_ENV === 'development' && {
