@@ -27,7 +27,6 @@ import {
 import { useFormattedPrice } from '../../../hooks/useOracle';
 import { useTokenBalance, useEnsureAllowance, useTokenApprove } from '../../../hooks/useToken';
 import { useFormState, useNotify } from '../../../hooks/useStore';
-import { debugBurnTransaction } from '../../../lib/wallet-debug';
 
 // Import utilities
 import { toWei, fromWei, formatUSD, planEpochRatePct, safeFromWei, formatEpochCountdown } from '../../../lib/utils';

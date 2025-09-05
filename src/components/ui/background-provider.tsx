@@ -3,8 +3,11 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import InteractiveNeuralVortex from '@/components/ui/interactive-neural-vortex';
 
+type BackgroundType = 'neural-vortex' | 'grainy-gradient' | 'none';
+
 interface BackgroundSettings {
   enabled: boolean;
+  type: BackgroundType;
   opacity: number;
   intensity: number;
   showOnPage: boolean;
@@ -15,6 +18,7 @@ interface BackgroundContextType {
   updateSettings: (newSettings: Partial<BackgroundSettings>) => void;
   toggleBackground: () => void;
   setPageBackground: (show: boolean) => void;
+  setBackgroundType: (type: BackgroundType) => void;
 }
 
 const BackgroundContext = createContext<BackgroundContextType | undefined>(undefined);
@@ -38,43 +42,75 @@ export function BackgroundProvider({
 }: BackgroundProviderProps) {
   const [settings, setSettings] = useState<BackgroundSettings>({
     enabled: true,
+    type: 'grainy-gradient', // Default to grainy gradient from background.md
     opacity: 0.4,
     intensity: 1.0,
     showOnPage: true,
     ...defaultSettings
   });
 
+  const [isClientMounted, setIsClientMounted] = useState(false);
+
+  // Client-side mounting detection for SSR safety
+  useEffect(() => {
+    setIsClientMounted(true);
+  }, []);
+
   // Load settings from localStorage on mount
   useEffect(() => {
-    const savedSettings = localStorage.getItem('luxplay-background-settings');
-    if (savedSettings) {
-      try {
+    if (!isClientMounted) return;
+    
+    try {
+      const savedSettings = localStorage.getItem('luxplay-background-settings');
+      if (savedSettings) {
         const parsed = JSON.parse(savedSettings);
         setSettings(prev => ({ ...prev, ...parsed }));
-      } catch (error) {
-        console.error('Failed to parse LUXPLAY background settings from localStorage:', error);
       }
+    } catch (error) {
+      console.error('Failed to parse LUXPLAY background settings from localStorage:', error);
     }
-  }, []);
+  }, [isClientMounted]);
 
   // Save settings to localStorage when they change
   useEffect(() => {
-    localStorage.setItem('luxplay-background-settings', JSON.stringify(settings));
-  }, [settings]);
+    if (!isClientMounted) return;
+    
+    try {
+      localStorage.setItem('luxplay-background-settings', JSON.stringify(settings));
+    } catch (error) {
+      console.warn('Failed to save background settings to localStorage:', error);
+    }
+  }, [settings, isClientMounted]);
 
   // Update body background based on settings for dark mode
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (!isClientMounted) return;
+    
+    try {
       const body = document.body;
       if (settings.enabled && settings.showOnPage) {
-        // Transparent body when neural vortex background is active
-        body.style.background = 'transparent';
+        if (settings.type === 'grainy-gradient') {
+          // Apply grainy gradient background class
+          body.classList.add('bg-grainy-gradient');
+          body.style.background = '';
+        } else {
+          // Transparent body for other background types
+          body.classList.remove('bg-grainy-gradient');
+          body.style.background = 'transparent';
+        }
       } else {
         // Fallback to LUXPLAY dark theme background when disabled
+        body.classList.remove('bg-grainy-gradient');
         body.style.background = 'hsl(var(--background))';
       }
+    } catch (error) {
+      console.warn('[BackgroundProvider] Failed to update body background:', error);
+      // Fallback to default background
+      if (typeof document !== 'undefined') {
+        document.body.style.background = 'hsl(var(--background))';
+      }
     }
-  }, [settings.enabled, settings.showOnPage]);
+  }, [settings.enabled, settings.showOnPage, settings.type, isClientMounted]);
 
   const updateSettings = (newSettings: Partial<BackgroundSettings>) => {
     setSettings(prev => ({ ...prev, ...newSettings }));
@@ -88,23 +124,46 @@ export function BackgroundProvider({
     setSettings(prev => ({ ...prev, showOnPage: show }));
   };
 
+  const setBackgroundType = (type: BackgroundType) => {
+    setSettings(prev => ({ ...prev, type }));
+  };
+
   const value = {
     settings,
     updateSettings,
     toggleBackground,
     setPageBackground,
+    setBackgroundType,
   };
+
+  // Prevent rendering background components during SSR
+  if (!isClientMounted) {
+    return (
+      <BackgroundContext.Provider value={value}>
+        <div className="relative z-10">
+          {children}
+        </div>
+      </BackgroundContext.Provider>
+    );
+  }
 
   return (
     <BackgroundContext.Provider value={value}>
-      {/* Render the neural vortex background if enabled and should show on page */}
+      {/* Render background based on type if enabled and should show on page */}
       {settings.enabled && settings.showOnPage && (
-        <InteractiveNeuralVortex 
-          opacity={settings.opacity}
-          intensity={settings.intensity}
-        />
+        <>
+          {settings.type === 'neural-vortex' && (
+            <InteractiveNeuralVortex 
+              opacity={settings.opacity}
+              intensity={settings.intensity}
+            />
+          )}
+          {/* Grainy gradient is applied via body class, no component needed */}
+        </>
       )}
-      {children}
+      <div className="relative z-10">
+        {children}
+      </div>
     </BackgroundContext.Provider>
   );
 }
@@ -126,6 +185,7 @@ export const usePageBackground = (showBackground: boolean = true) => {
 // Component for pages that want to explicitly control background
 interface PageBackgroundProps {
   show?: boolean;
+  type?: BackgroundType;
   opacity?: number;
   intensity?: number;
   children?: ReactNode;
@@ -133,6 +193,7 @@ interface PageBackgroundProps {
 
 export function PageBackground({ 
   show = true, 
+  type,
   opacity, 
   intensity, 
   children 
@@ -141,6 +202,7 @@ export function PageBackground({
   
   useEffect(() => {
     const updates: Partial<BackgroundSettings> = { showOnPage: show };
+    if (type !== undefined) updates.type = type;
     if (opacity !== undefined) updates.opacity = opacity;
     if (intensity !== undefined) updates.intensity = intensity;
     
@@ -150,11 +212,12 @@ export function PageBackground({
     return () => {
       updateSettings({ 
         showOnPage: true, 
+        type: 'grainy-gradient',
         opacity: 0.4, 
         intensity: 1.0 
       });
     };
-  }, [show, opacity, intensity, updateSettings]);
+  }, [show, type, opacity, intensity, updateSettings]);
 
   return <>{children}</>;
 }

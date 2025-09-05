@@ -4,34 +4,30 @@
 /* LUXPLAY Dark Mode Only Configuration */
 :root {
   /* Dark theme color variables */
-  --background: oklch(0.2244 0.0074 67.4370);
+  --background: oklch(0.1818 0.0020 106.5975);
   --foreground: oklch(0.9288 0.0126 255.5078);
   --card: oklch(0.2801 0.0080 59.3379);
   --card-foreground: oklch(0.9288 0.0126 255.5078);
-  --popover: oklch(0.2801 0.0080 59.3379);
+  --popover: oklch(0.2977 0.1392 284.6919);
   --popover-foreground: oklch(0.9288 0.0126 255.5078);
-  --primary: oklch(0.6801 0.1583 276.9349);
-  --primary-foreground: oklch(0.2244 0.0074 67.4370);
-  --secondary: oklch(0.3359 0.0077 59.4197);
+  --primary: oklch(0.5546 0.2121 304.4995);
+  --primary-foreground: oklch(1.0000 0 0);
+  --secondary: oklch(0.0957 0.0465 279.3922);
   --secondary-foreground: oklch(0.8717 0.0093 258.3382);
   --muted: oklch(0.2801 0.0080 59.3379);
   --muted-foreground: oklch(0.7137 0.0192 261.3246);
-  --accent: oklch(0.3896 0.0074 59.4734);
+  --accent: oklch(0.2977 0.1392 284.6919);
   --accent-foreground: oklch(0.8717 0.0093 258.3382);
-  --destructive: oklch(0.6368 0.2078 25.3313);
+  --destructive: oklch(0.8587 0.1459 90.4677);
   --destructive-foreground: oklch(0.2244 0.0074 67.4370);
   --border: oklch(0.3359 0.0077 59.4197);
   --input: oklch(0.3359 0.0077 59.4197);
   --ring: oklch(0.6801 0.1583 276.9349);
-  
-  /* Chart colors for dark mode */
   --chart-1: oklch(0.6801 0.1583 276.9349);
   --chart-2: oklch(0.5854 0.2041 277.1173);
   --chart-3: oklch(0.5106 0.2301 276.9656);
   --chart-4: oklch(0.4568 0.2146 277.0229);
   --chart-5: oklch(0.3984 0.1773 277.3662);
-  
-  /* Sidebar colors for dark mode */
   --sidebar: oklch(0.3359 0.0077 59.4197);
   --sidebar-foreground: oklch(0.9288 0.0126 255.5078);
   --sidebar-primary: oklch(0.6801 0.1583 276.9349);
@@ -40,16 +36,10 @@
   --sidebar-accent-foreground: oklch(0.8717 0.0093 258.3382);
   --sidebar-border: oklch(0.3359 0.0077 59.4197);
   --sidebar-ring: oklch(0.6801 0.1583 276.9349);
-  
-  /* Typography */
-  --font-sans: Plus Jakarta Sans, sans-serif;
+  --font-sans: Russo One, ui-sans-serif, sans-serif, system-ui;
   --font-serif: Lora, serif;
   --font-mono: Roboto Mono, monospace;
-  
-  /* Border radius */
   --radius: 1.25rem;
-  
-  /* Dark mode shadows */
   --shadow-2xs: 2px 2px 10px 4px hsl(0 0% 0% / 0.09);
   --shadow-xs: 2px 2px 10px 4px hsl(0 0% 0% / 0.09);
   --shadow-sm: 2px 2px 10px 4px hsl(0 0% 0% / 0.18), 2px 1px 2px 3px hsl(0 0% 0% / 0.18);
@@ -59,13 +49,14 @@
   --shadow-xl: 2px 2px 10px 4px hsl(0 0% 0% / 0.18), 2px 8px 10px 3px hsl(0 0% 0% / 0.18);
   --shadow-2xl: 2px 2px 10px 4px hsl(0 0% 0% / 0.45);
   
-  /* Spacing and tracking */
-  --tracking-normal: 0em;
-  --spacing: 0.25rem;
+  /* Grainy gradient background colors */
+  --c0: oklch(0.1818 0.0020 106.5975);
+  --c1: oklch(0.2801 0.0080 59.3379);
+  --c2: oklch(0.3359 0.0077 59.4197);
+  --c3: oklch(0.2977 0.1392 284.6919);
 }
 
 @theme inline {
-  /* Tailwind CSS color mappings for dark mode */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -85,15 +76,11 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  
-  /* Chart colors */
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
-  
-  /* Sidebar colors */
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -103,18 +90,15 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* Typography */
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
   --font-serif: var(--font-serif);
 
-  /* Border radius variants */
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  /* Shadow variants */
   --shadow-2xs: var(--shadow-2xs);
   --shadow-xs: var(--shadow-xs);
   --shadow-sm: var(--shadow-sm);
@@ -123,7 +107,15 @@
   --shadow-lg: var(--shadow-lg);
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
+
+  --tracking-tighter: calc(var(--tracking-normal) - 0.05em);
+  --tracking-tight: calc(var(--tracking-normal) - 0.025em);
+  --tracking-normal: var(--tracking-normal);
+  --tracking-wide: calc(var(--tracking-normal) + 0.025em);
+  --tracking-wider: calc(var(--tracking-normal) + 0.05em);
+  --tracking-widest: calc(var(--tracking-normal) + 0.1em);
 }
+
 
 @layer base {
   /* Global base styles for dark mode */
@@ -137,10 +129,32 @@
   }
   
   body {
-    @apply text-foreground;
-    /* Dynamic background - controlled by BackgroundProvider */
+    @apply bg-background text-foreground;
     /* Ensure smooth font rendering */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 }
+
+/* Grainy Gradient Background from background.md */
+.bg-grainy-gradient {
+  background:
+    radial-gradient(60rem 30rem at 10% 0%, rgba(140, 70, 255, 0.25), transparent 60%),
+    radial-gradient(40rem 20rem at 85% 20%, rgba(50, 120, 255, 0.18), transparent 60%),
+    radial-gradient(30rem 15rem at 50% 90%, rgba(20, 30, 90, 0.25), transparent 60%),
+    linear-gradient(135deg, var(--c0) 0%, var(--c1) 35%, var(--c2) 70%, var(--c3) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.bg-grainy-gradient::before {
+  content: "";
+  position: absolute;
+  inset: -2rem;
+  pointer-events: none;
+  background: radial-gradient(120% 120% at 50% 60%,
+    rgba(0,0,0,0) 60%,
+    rgba(0,0,0,.25) 100%);
+  filter: blur(40px); /* BLUR aplicado aqui */
+}
+

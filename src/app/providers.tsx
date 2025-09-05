@@ -11,7 +11,7 @@ import { WalletErrorBoundary } from '@/components/WalletErrorBoundary';
 import { initializeErrorHandling } from '../../lib/error-suppression';
 import { enhanceMetaMaskStability } from '../../lib/metamask-stability';
 import { AuthProvider } from '@/contexts/AuthContext';
-import '../../lib/wallet-diagnostic'; // Auto-run diagnostics
+// import '../../lib/wallet-diagnostic'; // Auto-run diagnostics
 
 // Enhanced Wagmi configuration for LuxPlay with multiple wallet support
 const config = createConfig({
@@ -153,6 +153,9 @@ function ThemeProvider({ children }: ThemeProviderProps) {
     
     // Set browser color scheme to dark
     root.style.colorScheme = 'dark';
+    
+    // Set standard background from global.css
+    // Background is now handled by BackgroundProvider
     
     // Store LUXPLAY theme preference
     localStorage.setItem('luxplay-ui-theme', 'dark');

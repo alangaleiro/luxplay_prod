@@ -31,10 +31,12 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <Providers>
-          <Navigation />
-          <main className="min-h-screen">
-            {children}
-          </main>
+          <div className="relative z-10">
+            <Navigation />
+            <main className="min-h-screen relative">
+              {children}
+            </main>
+          </div>
         </Providers>
       </body>
     </html>
