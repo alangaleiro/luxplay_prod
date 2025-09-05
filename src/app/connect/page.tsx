@@ -528,7 +528,7 @@ function ConnectPageContent() {
           <Button 
             variant="ghost" 
             size="sm"
-            onClick={() => window.open('https://docs.luxplay.io', '_blank')}
+            onClick={() => window.open('https://luxplay.gitbook.io/luxplay-docs/', '_blank')}
           >
             <ExternalLink className="w-3 h-3 mr-1" />
             Documentation
