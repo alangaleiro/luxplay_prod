@@ -380,33 +380,7 @@ function ConnectPageContent() {
                   </div>
                 )}
               </div>
-              
-              {/* Wallet-specific instructions */}
-              <div className="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-                <div className="text-xs text-blue-600 dark:text-blue-400 space-y-2">
-                  <p className="font-medium">Supported Wallets:</p>
-                  <ul className="list-disc list-inside space-y-1">
-                    <li><strong>MetaMask:</strong> Browser extension or mobile app</li>
-                    <li><strong>Trust Wallet:</strong> Use WalletConnect or browser extension</li>
-                    <li><strong>SafePal:</strong> Use WalletConnect or browser extension</li>
-                    <li><strong>Coinbase Wallet:</strong> Browser extension or mobile app</li>
-                    <li><strong>Others:</strong> Any WalletConnect-compatible wallet</li>
-                  </ul>
-                </div>
-              </div>
-              
-              {/* Troubleshooting for WalletConnect issues */}
-              <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
-                <div className="text-xs text-yellow-600 dark:text-yellow-400 space-y-2">
-                  <p className="font-medium">Having issues with WalletConnect?</p>
-                  <ul className="list-disc list-inside space-y-1">
-                    <li>Try refreshing the page and clicking WalletConnect again</li>
-                    <li>Use MetaMask as an alternative (works more reliably)</li>
-                    <li>For mobile wallets, try opening this page in their built-in browser</li>
-                    <li>Check that your wallet app supports WalletConnect v2</li>
-                  </ul>
-                </div>
-              </div>
+
 
               <div className="mt-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
                 <div className="flex items-start gap-2">
