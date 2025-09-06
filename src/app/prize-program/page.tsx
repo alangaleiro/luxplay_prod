@@ -52,7 +52,9 @@ import {
   ArrowUp,
   Timer,
   Coins,
-  Wallet
+  Wallet,
+  Lock,
+  Unlock
 } from 'lucide-react';
 
 interface CountdownClockProps {
@@ -804,19 +806,61 @@ export default function PrizeProgramPage() {
         </Card>
       </div>
 
-      {/* Yield Information - Full Width */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="card-title-large">
-            Yield Information
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-center font-mono">
-          <div className="text-2xl font-bold font-mono">
-            Next Prize Amount: {formatPlayAmount(BigInt(Math.floor(nextPrizeAmount * (10**18))))} PLAY
-          </div>
-        </CardContent>
-      </Card>
+      {/* Plan Lock + Yield Information */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="card-title-large">
+              Plan Lock
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center font-mono">
+            <div className="space-y-2">
+              <div className="flex items-center justify-center gap-2">
+                {userInfo && Array.isArray(userInfo) && userInfo[8] ? (
+                  <>
+                    <Unlock className="w-5 h-5 text-green-500" />
+                    <span className="text-green-500 font-bold">Unlocked</span>
+                  </>
+                ) : (
+                  <>
+                    <Lock className="w-5 h-5 text-red-500" />
+                    <span className="text-red-500 font-bold">Locked</span>
+                  </>
+                )}
+              </div>
+              {userInfo && Array.isArray(userInfo) && userInfo[9] && (
+                <div className="text-sm text-muted-foreground">
+                  {console.log('[DEBUG] Plan Lock data:', {
+                    unlocked: userInfo[8],
+                    unlockAt: userInfo[9],
+                    unlockAtNumber: Number(userInfo[9]),
+                    date: new Date(Number(userInfo[9]) * 1000)
+                  })}
+                  Unlock: {new Date(Number(userInfo[9]) * 1000).toLocaleDateString('en-US', {
+                    month: '2-digit',
+                    day: '2-digit',
+                    year: '2-digit'
+                  })}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle className="card-title-large">
+              Yield Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center font-mono">
+            <div className="text-2xl font-bold font-mono">
+              Next Prize Amount: {formatPlayAmount(BigInt(Math.floor(nextPrizeAmount * (10**18))))} PLAY
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
