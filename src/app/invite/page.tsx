@@ -119,61 +119,7 @@ export default function InviteProgramPage() {
 
   const filteredDownlineStakes = getFilteredDownlineStakes();
 
-  // Debug logging for invite page data (simplified to avoid hook order issues)
-  useEffect(() => {
-    console.log('[DEBUG] ===== INVITE PAGE DATA STATE =====');
-    console.log('[DEBUG] Basic Info:', {
-      address: address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'undefined',
-      isConnected,
-      isAuthenticated,
-      isRegistered
-    });
-    
-    console.log('[DEBUG] Contract Addresses:', {
-      ACTIVE_POOL: CONTRACT_ADDRESSES.ACTIVE_POOL,
-      USER_CONTRACT: CONTRACT_ADDRESSES.USER_CONTRACT
-    });
-    
-    console.log('[DEBUG] ACTIVE_POOL Hooks (ISSUE):', {
-      userInfo: {
-        data: userInfo ? (Array.isArray(userInfo) ? `Array(${userInfo.length})` : 'Object') : 'undefined',
-        isLoading: isUserInfoLoading
-      },
-      userTotals: {
-        data: userTotals ? (Array.isArray(userTotals) ? `Array(${userTotals.length})` : 'Object') : 'undefined',
-        isLoading: isUserTotalsLoading
-      },
-      pendingRewards: {
-        data: pendingRewards?.toString() || 'undefined',
-        isLoading: isPendingRewardsLoading
-      },
-      totalReferralReceived: {
-        data: totalReferralReceived?.toString() || 'undefined',
-        isLoading: isTotalReferralLoading
-      },
-      referralCap: {
-        data: referralCap ? (Array.isArray(referralCap) ? `Array(${referralCap.length})` : 'Object') : 'undefined',
-        isLoading: isReferralCapLoading
-      },
-      downlineStakes: {
-        data: downlineStakes ? (Array.isArray(downlineStakes) ? `Array(${downlineStakes.length})` : 'Object') : 'undefined',
-        isLoading: isDownlineStakesLoading
-      }
-    });
-    
-    console.log('[DEBUG] USER_CONTRACT Hooks (WORKING):', {
-      networkingData: {
-        data: networkingData ? 'loaded' : 'undefined',
-        referrals: networkingData?.referrals ? `Array(${(networkingData.referrals as any[]).length})` : 'undefined',
-        downlineCounts: networkingData?.downlineCounts ? `Array(${(networkingData.downlineCounts as any[]).length})` : 'undefined',
-        referrer: networkingData?.referrer || 'undefined',
-        isRegistered: networkingData?.isRegistered || false,
-        isActive: networkingData?.isActive || false
-      }
-    });
-    
-    console.log('[DEBUG] ===== END INVITE PAGE DATA =====');
-  }, [address, isConnected, isAuthenticated, isRegistered, userInfo, pendingRewards, userTotals, referralCap, totalReferralReceived, downlineCounts, downlineStakes, price, networkingData, selectedAPYPlan, filteredDownlineStakes, isUserInfoLoading, isPendingRewardsLoading, isUserTotalsLoading, isReferralCapLoading, isTotalReferralLoading, isDownlineCountsLoading, isDownlineStakesLoading]);
+
 
   // Handle successful claim
   useEffect(() => {
@@ -243,27 +189,12 @@ export default function InviteProgramPage() {
   const referralReceived = userTotals && Array.isArray(userTotals) ? (userTotals[5] as bigint) : 0n;
   const remainingReferralCap = cap2xMax > referralReceived ? cap2xMax - referralReceived : 0n;
 
-  // Redirect if not authenticated - enhanced logic to allow staying on invite page
+  // Redirect if not authenticated
   useEffect(() => {
-    // Enhanced debug logging for redirect decisions
-    console.log('[DEBUG] Invite Program - Auth state check:', {
-      isLoading,
-      isAuthenticated,
-      isRegistered,
-      address: address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'undefined',
-      shouldRedirect: !isLoading && (!isAuthenticated || !isRegistered)
-    });
-
-    // Only redirect if we're not loading and either not authenticated or not registered
-    // If user is authenticated AND registered, let them stay on invite page
     if (!isLoading && (!isAuthenticated || !isRegistered)) {
-      console.log('[DEBUG] Invite Program - User not authenticated or not registered, redirecting to connect page with returnTo parameter');
       router.push('/connect?returnTo=/invite');
-    } else if (!isLoading && isAuthenticated && isRegistered) {
-      console.log('[DEBUG] Invite Program - User authenticated and registered, staying on invite page');
-      // User is fully authenticated and registered - stay on invite page
     }
-  }, [isAuthenticated, isRegistered, isLoading, router, address]);
+  }, [isAuthenticated, isRegistered, isLoading, router]);
 
   // Show loading if checking auth
   if (isLoading || !isAuthenticated || !isRegistered) {
@@ -509,7 +440,9 @@ export default function InviteProgramPage() {
                 size="sm"
                 onClick={() => {
                   if (address) {
-                    navigator.clipboard.writeText(address);
+                    navigator.clipboard.writeText(address).catch(() => {
+                      notify.error('Copy Failed', 'Unable to copy to clipboard');
+                    });
                     notify.success('Copied!', 'Referral link copied to clipboard');
                   }
                 }}

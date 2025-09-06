@@ -40,7 +40,8 @@ export class WalletErrorBoundary extends Component<Props, State> {
     if (isWalletError) {
       // Log error in development for debugging
       if (process.env.NODE_ENV === 'development') {
-        console.debug('LuxPlay: Wallet error caught by boundary:', error);
+        const sanitizedMessage = error.message?.replace(/[\r\n\t]/g, ' ').substring(0, 500) || 'Unknown error';
+        console.debug('LuxPlay: Wallet error caught by boundary:', sanitizedMessage);
       }
       return { hasError: true, error };
     }
@@ -88,7 +89,8 @@ export function useWalletErrorHandler() {
       if (walletErrors.some(keyword => errorMessage.includes(keyword))) {
         event.preventDefault();
         if (process.env.NODE_ENV === 'development') {
-          console.debug('LuxPlay: Wallet error suppressed:', error);
+          const sanitizedMessage = error?.message?.replace(/[\r\n\t]/g, ' ').substring(0, 500) || 'Unknown error';
+          console.debug('LuxPlay: Wallet error suppressed:', sanitizedMessage);
         }
       }
     };
@@ -108,7 +110,8 @@ export function useWalletErrorHandler() {
       ) {
         event.preventDefault();
         if (process.env.NODE_ENV === 'development') {
-          console.debug('LuxPlay: Promise rejection suppressed:', error);
+          const sanitizedMessage = error?.message?.replace(/[\r\n\t]/g, ' ').substring(0, 500) || 'Unknown error';
+          console.debug('LuxPlay: Promise rejection suppressed:', sanitizedMessage);
         }
       }
     };

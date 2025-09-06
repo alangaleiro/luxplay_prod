@@ -38,25 +38,7 @@ export function useUserInfo(userAddress?: `0x${string}`) {
     }
   });
 
-  // Enhanced debug logging with more details
-  console.log('[DEBUG] useUserInfo DETAILED:', {
-    contractAddress: CONTRACT_ADDRESSES.ACTIVE_POOL,
-    userAddress: userAddress ? `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}` : 'undefined',
-    functionName: 'userInfo',
-    args: userAddress ? [userAddress] : undefined,
-    result: {
-      data: result.data,
-      dataType: typeof result.data,
-      isArray: Array.isArray(result.data),
-      arrayLength: Array.isArray(result.data) ? result.data.length : 'N/A',
-      isLoading: result.isLoading,
-      isError: result.isError,
-      isSuccess: result.isSuccess,
-      error: result.error,
-      status: result.status,
-      fetchStatus: result.fetchStatus
-    }
-  });
+
 
   return result;
 }
@@ -80,16 +62,7 @@ export function useViewUserTotals(userAddress?: `0x${string}`) {
     }
   });
 
-  // Debug logging
-  console.log('[DEBUG] useViewUserTotals hook result:', {
-    address: userAddress ? `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}` : 'undefined',
-    data: result.data ? 'loaded' : 'undefined',
-    isLoading: result.isLoading,
-    isError: result.isError,
-    error: result.error?.message || 'none',
-    status: result.status,
-    contractAddress: CONTRACT_ADDRESSES.ACTIVE_POOL
-  });
+
 
   return result;
 }
@@ -115,15 +88,7 @@ export function useTotalActive() {
     functionName: 'totalActive',
   });
   
-  // Debug log for totalActive
-  console.log('[DEBUG] useTotalActive hook result:', {
-    data: result.data?.toString() || 'undefined',
-    isLoading: result.isLoading,
-    isError: result.isError,
-    error: result.error?.message || 'none',
-    status: result.status,
-    contractAddress: CONTRACT_ADDRESSES.ACTIVE_POOL
-  });
+
   
   return result;
 }
@@ -149,23 +114,7 @@ export function useReferralPendingReward(userAddress?: `0x${string}`) {
     }
   });
 
-  // Enhanced debug logging
-  console.log('[DEBUG] useReferralPendingReward DETAILED:', {
-    contractAddress: CONTRACT_ADDRESSES.ACTIVE_POOL,
-    userAddress: userAddress ? `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}` : 'undefined',
-    functionName: 'referralPendingReward',
-    args: userAddress ? [userAddress] : undefined,
-    result: {
-      data: result.data,
-      dataString: result.data?.toString() || 'undefined',
-      isLoading: result.isLoading,
-      isError: result.isError,
-      isSuccess: result.isSuccess,
-      error: result.error,
-      status: result.status,
-      fetchStatus: result.fetchStatus
-    }
-  });
+
 
   return result;
 }
@@ -189,16 +138,7 @@ export function useTotalReferralAccrued(userAddress?: `0x${string}`) {
     }
   });
 
-  // Debug logging
-  console.log('[DEBUG] useTotalReferralAccrued hook result:', {
-    address: userAddress ? `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}` : 'undefined',
-    data: result.data?.toString() || 'undefined',
-    isLoading: result.isLoading,
-    isError: result.isError,
-    error: result.error?.message || 'none',
-    status: result.status,
-    contractAddress: CONTRACT_ADDRESSES.ACTIVE_POOL
-  });
+
 
   return result;
 }
@@ -222,16 +162,7 @@ export function useViewDownlinesStakeByPlanAndLevel(userAddress?: `0x${string}`)
     }
   });
 
-  // Debug logging
-  console.log('[DEBUG] useViewDownlinesStakeByPlanAndLevel hook result:', {
-    address: userAddress ? `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}` : 'undefined',
-    data: result.data ? 'loaded' : 'undefined',
-    isLoading: result.isLoading,
-    isError: result.isError,
-    error: result.error?.message || 'none',
-    status: result.status,
-    contractAddress: CONTRACT_ADDRESSES.ACTIVE_POOL
-  });
+
 
   return result;
 }
@@ -508,25 +439,7 @@ export function usePrizeSummary() {
   const apyReceived = userTotals && Array.isArray(userTotals) ? (userTotals[4] as bigint) : 0n;
   const referralReceived = userTotals && Array.isArray(userTotals) ? (userTotals[5] as bigint) : 0n;
 
-  console.log('[DEBUG] Prize Summary Data (Updated ABI):', {
-    address,
-    totalActiveTokens: totalActiveTokens?.toString() || 'undefined',
-    totalActiveFormatted: totalActiveTokens ? `${Number(fromWei(totalActiveTokens as bigint)).toFixed(4)} PLAY` : 'N/A',
-    userInfo: userInfo ? `Array(${Array.isArray(userInfo) ? userInfo.length : 'not array'})` : 'undefined',
-    userInfoValues: userInfo && Array.isArray(userInfo) ? {
-      activeAmount: userInfo[0]?.toString(),
-      principal: userInfo[1]?.toString(),
-      voucherAmount: userInfo[2]?.toString(),
-      maxReferralCap: userInfo[3]?.toString(),
-      plan: userInfo[4]?.toString(),
-      lastEpochId: userInfo[5]?.toString(),
-      pendingReward: userInfo[6]?.toString(), // ✅ This is our claimable amount
-      logicAmount: userInfo[7]?.toString()
-    } : 'N/A',
-    userTotals: userTotals ? `Array(${Array.isArray(userTotals) ? userTotals.length : 'not array'})` : 'undefined',
-    claimableAmount: pendingReward.toString(),
-    claimableFormatted: `${Number(fromWei(pendingReward)).toFixed(4)} PLAY`
-  });
+
 
   return {
     countdownSec: countdownSec ? Number(countdownSec) : 0,
@@ -568,16 +481,7 @@ export function useViewRemainingReferralCapPct(userAddress?: `0x${string}`) {
     }
   });
 
-  // Debug logging
-  console.log('[DEBUG] useViewRemainingReferralCapPct hook result:', {
-    address: userAddress ? `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}` : 'undefined',
-    data: result.data ? 'loaded' : 'undefined',
-    isLoading: result.isLoading,
-    isError: result.isError,
-    error: result.error?.message || 'none',
-    status: result.status,
-    contractAddress: CONTRACT_ADDRESSES.ACTIVE_POOL
-  });
+
 
   return result;
 }
@@ -601,18 +505,22 @@ export function useViewDownlineActiveCount(userAddress?: `0x${string}`) {
     }
   });
 
-  // Debug logging
-  console.log('[DEBUG] useViewDownlineActiveCount hook result:', {
-    address: userAddress ? `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}` : 'undefined',
-    data: result.data ? 'loaded' : 'undefined',
-    isLoading: result.isLoading,
-    isError: result.isError,
-    error: result.error?.message || 'none',
-    status: result.status,
-    contractAddress: CONTRACT_ADDRESSES.ACTIVE_POOL
-  });
+
 
   return result;
+}
+
+export function useViewUnlockableWarmUp(userAddress?: `0x${string}`) {
+  return useReadContract({
+    address: CONTRACT_ADDRESSES.ACTIVE_POOL,
+    abi: activePoolAbi,
+    functionName: 'viewUnlockableWarmUp',
+    args: userAddress ? [userAddress] : undefined,
+    query: {
+      enabled: !!userAddress,
+      refetchInterval: 5000,
+    }
+  });
 }
 
 // Plan Lock hooks - using available functions
@@ -661,26 +569,7 @@ export function useViewPrincipalLock(userAddress?: `0x${string}`) {
     }
   });
 
-  // Enhanced debug logging
-  console.log('[DEBUG] useViewPrincipalLock DETAILED:', {
-    contractAddress: CONTRACT_ADDRESSES.ACTIVE_POOL,
-    userAddress: userAddress ? `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}` : 'undefined',
-    functionName: 'viewPrincipalLock',
-    enabled: !!userAddress,
-    result: {
-      data: result.data,
-      dataType: typeof result.data,
-      isArray: Array.isArray(result.data),
-      arrayLength: Array.isArray(result.data) ? result.data.length : 'N/A',
-      arrayValues: Array.isArray(result.data) ? result.data.map((v, i) => `[${i}]: ${v?.toString()}`) : 'N/A',
-      isLoading: result.isLoading,
-      isError: result.isError,
-      isSuccess: result.isSuccess,
-      error: result.error,
-      status: result.status,
-      fetchStatus: result.fetchStatus
-    }
-  });
+
 
   return result;
 }

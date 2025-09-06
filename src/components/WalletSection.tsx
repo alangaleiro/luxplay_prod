@@ -12,11 +12,19 @@ import { useCheckpoint } from '../../hooks/useActivePool';
 function SyncDataButton() {
   const { checkpoint, isPending } = useCheckpoint();
   
+  const handleSync = () => {
+    try {
+      checkpoint();
+    } catch (error) {
+      console.error('Sync failed:', error);
+    }
+  };
+  
   return (
     <Button
       variant="outline"
       size="sm"
-      onClick={checkpoint}
+      onClick={handleSync}
       disabled={isPending}
     >
       {isPending ? 'Syncing...' : 'Sync Data'}

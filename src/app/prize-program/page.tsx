@@ -23,7 +23,8 @@ import {
   useUserInfo,
   useViewUserTotals,
   useTotalActive,
-  useViewPrincipalLock
+  useViewPrincipalLock,
+  useViewUnlockableWarmUp
 } from '../../../hooks/useActivePool';
 import { useFormattedPrice } from '../../../hooks/useOracle';
 import { useTokenBalance, useEnsureAllowance, useTokenApprove } from '../../../hooks/useToken';
@@ -131,6 +132,7 @@ export default function PrizeProgramPage() {
   const { data: userTotals, refetch: refetchUserTotals } = useViewUserTotals(address);
   const { data: totalActive, isLoading: isTotalActiveLoading, error: totalActiveError } = useTotalActive();
   const { data: principalLockData } = useViewPrincipalLock(address);
+  const { data: unlockableWarmUp } = useViewUnlockableWarmUp(address);
   
   // Extract unlock status and date from viewPrincipalLock
   // Array structure: [plan, since, lockSeconds, unlockAt, nowTs, remaining, unlockedNow]
@@ -139,17 +141,7 @@ export default function PrizeProgramPage() {
   // Convert unlockAt timestamp to JavaScript Date object
   const unlockDate = unlockAt && Number(unlockAt) > 0 ? new Date(Number(unlockAt) * 1000) : null;
   
-  // Debug Plan Lock data
-  useEffect(() => {
-    console.log('[DEBUG] Plan Lock viewPrincipalLock data:', {
-      address: address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'undefined',
-      principalLockData,
-      isUnlocked,
-      unlockAt: unlockAt?.toString(),
-      unlockDate: unlockDate?.toISOString(),
-      currentTime: new Date().toISOString()
-    });
-  }, [address, principalLockData, isUnlocked, unlockAt, unlockDate]);
+
   
   const refetchSummary = async () => {
     try {
@@ -164,25 +156,11 @@ export default function PrizeProgramPage() {
     }
   };
 
-  // Debug logging for claimable value
-  useEffect(() => {
-    if (summary?.claimable !== undefined) {
-      console.log('[DEBUG] Claimable value updated:', {
-        claimable: summary.claimable.toString(),
-        claimableFormatted: fromWei(summary.claimable as bigint),
-        address
-      });
-    }
-  }, [summary?.claimable, address]);
+
 
   // Set selectedPlan from user's actual plan in contract
   useEffect(() => {
     if (summary?.userPlan !== undefined && summary.userPlan !== selectedPlan) {
-      console.log('[DEBUG] Setting selected plan from user contract data:', {
-        currentSelectedPlan: selectedPlan,
-        userActualPlan: summary.userPlan,
-        updating: true
-      });
       setSelectedPlan(summary.userPlan as PlanId);
     }
   }, [summary?.userPlan, selectedPlan, setSelectedPlan]);
@@ -238,70 +216,27 @@ export default function PrizeProgramPage() {
   
   const { approve } = useTokenApprove();
 
-  // Debug logging for global active tokens
-  useEffect(() => {
-    if (summary?.globalActiveTokens !== undefined) {
-      console.log('[DEBUG] Global active tokens updated:', {
-        globalActiveTokens: summary.globalActiveTokens.toString(),
-        globalActiveFormatted: fromWei(summary.globalActiveTokens as bigint),
-        usdValue: formatUSD(Number(fromWei((summary.globalActiveTokens as bigint) || 0n)) * Number(price || 0))
-      });
-    }
-  }, [summary?.globalActiveTokens, price]);
 
-  // Debug logging for user plan information
-  useEffect(() => {
-    if (summary?.userPlan !== undefined || userInfo) {
-      console.log('[DEBUG] User plan information:', {
-        summaryUserPlan: summary?.userPlan,
-        selectedPlan,
-        userInfoPlan: userInfo && Array.isArray(userInfo) ? userInfo[4] : 'N/A',
-        planNames: {
-          0: '400% APY',
-          1: '750% APY', 
-          2: '1400% APY'
-        }
-      });
-    }
-  }, [summary?.userPlan, selectedPlan, userInfo]);
+
+
 
   // Track client mounting to prevent hydration issues
   useEffect(() => {
     setIsClientMounted(true);
   }, []);
 
-  // Debug logging for direct totalActive call
-  useEffect(() => {
-    console.log('[DEBUG] Direct totalActive hook data:', {
-      totalActive: totalActive?.toString() || 'undefined',
-      totalActiveFormatted: totalActive ? fromWei(totalActive as bigint) : 'N/A',
-      isLoading: isTotalActiveLoading,
-      error: totalActiveError?.message || 'none'
-    });
-  }, [totalActive, isTotalActiveLoading, totalActiveError]);
 
-  // Redirect if not authenticated - enhanced logic
-  useEffect(() => {
-    // Enhanced debug logging for redirect decisions
-    console.log('[DEBUG] Prize Program - Auth state check:', {
-      isLoading,
-      isAuthenticated,
-      isRegistered,
-      address: address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'undefined',
-      shouldRedirect: !isLoading && (!isAuthenticated || !isRegistered)
-    });
 
-    // Only redirect if we're not loading and either not authenticated or not registered
+  // Redirect if not authenticated
+  useEffect(() => {
     if (!isLoading && (!isAuthenticated || !isRegistered)) {
-      console.log('[DEBUG] Prize Program - Redirecting to connect page with returnTo parameter');
       router.push('/connect?returnTo=/prize-program');
     }
-  }, [isAuthenticated, isRegistered, isLoading, router, address]);
+  }, [isAuthenticated, isRegistered, isLoading, router]);
 
   // Auto-clear pending states if they get stuck (safety mechanism)
   useEffect(() => {
     if (pendingDepositAmount !== null && !isAllowancePending && allowanceReceipt?.isSuccess) {
-      console.log('[DEBUG] Safety mechanism: clearing stuck pending state');
       setPendingDepositAmount(null);
       setPendingDepositPlan(null);
     }
@@ -310,35 +245,19 @@ export default function PrizeProgramPage() {
   // Handle allowance receipt changes
   useEffect(() => {
     if (allowanceReceipt?.isSuccess) {
-      console.log('[DEBUG] Allowance approval confirmed', {
-        pendingDepositAmount: pendingDepositAmount?.toString(),
-        pendingDepositPlan
-      });
-      
       if (pendingDepositAmount && pendingDepositPlan !== null) {
-        console.log('[DEBUG] Proceeding with deposit after approval...');
-        
-        // Execute the pending deposit
         deposit(pendingDepositAmount, pendingDepositPlan);
-        
         notify.success('Approval Successful', 'Token approval confirmed. Processing deposit...');
       } else {
-        console.log('[DEBUG] Allowance approval confirmed without pending deposit');
         notify.success('Approval Successful', 'Token approval confirmed. You can now proceed with the deposit.');
       }
-      
-      // Always clear pending states after handling approval
       setPendingDepositAmount(null);
       setPendingDepositPlan(null);
     }
     
     if (allowanceReceipt?.isError) {
-      console.error('[DEBUG] Allowance approval failed:', allowanceReceipt.error);
-      
-      // Clear pending states on error
       setPendingDepositAmount(null);
       setPendingDepositPlan(null);
-      
       notify.error('Approval Failed', 'Token approval failed. Please try again.');
     }
   }, [allowanceReceipt?.isSuccess, allowanceReceipt?.isError, allowanceReceipt?.error, pendingDepositAmount, pendingDepositPlan, deposit, notify]);
@@ -376,8 +295,6 @@ export default function PrizeProgramPage() {
 
   useEffect(() => {
     if (moveWarmUpReceipt?.isSuccess) {
-      console.log('[DEBUG] Move warm-up transaction successful, refetching data...');
-      // Add a small delay before refetching to ensure blockchain state is updated
       setTimeout(() => {
         refetchSummary();
         notify.success('Activation Successful', 'Your warm-up tokens have been activated');
@@ -412,27 +329,18 @@ export default function PrizeProgramPage() {
 
   useEffect(() => {
     if (moveWarmUpReceipt?.isError) {
-      console.error('[ERROR] Move warm-up transaction failed:', moveWarmUpReceipt.error);
-      
       const error = moveWarmUpReceipt.error;
       let errorMessage = 'Failed to activate warm-up tokens';
       
-      // Handle specific BlockNotFoundError
       if (error?.message?.includes('Block at number') || error?.message?.includes('could not be found')) {
-        console.warn('[WARN] Block not found error detected, transaction may still be successful');
         errorMessage = 'Transaction submitted but confirmation delayed. Please check your wallet for updates.';
         notify.warning('Confirmation Delayed', errorMessage);
-        
-        // Try to refetch data after a delay in case transaction actually succeeded
         setTimeout(() => {
-          console.log('[DEBUG] Attempting to refetch data after block error...');
           refetchSummary();
         }, 10000);
-        
         return;
       }
       
-      // Handle other errors normally
       errorMessage = error?.message || errorMessage;
       notify.error('Activation Failed', errorMessage);
     }
@@ -467,39 +375,19 @@ export default function PrizeProgramPage() {
 
     try {
       if (mode === 'burn') {
-        console.log('[DEBUG] Starting burn process with amount:', amountWei.toString());
-        
-        // Check current allowance first
         const allowance = (currentAllowance as bigint) || 0n;
-        console.log('[DEBUG] Current allowance:', allowance.toString());
         
         if (allowance < amountWei) {
-          console.log('[DEBUG] Insufficient allowance, requesting approval...');
-          // Set a flag to track that we need to deposit after approval
           setPendingDepositAmount(amountWei);
           setPendingDepositPlan(selectedPlan);
-          
-          // Request approval with 10x amount for future transactions
           const approvalAmount = amountWei * 10n;
           approve(CONTRACT_ADDRESSES.ACTIVE_POOL, approvalAmount);
-          
-          // The actual deposit will be triggered by the allowanceReceipt success effect
           return;
         } else {
-          console.log('[DEBUG] Sufficient allowance exists, proceeding with deposit...');
-          // Sufficient allowance exists, proceed directly with deposit
           deposit(amountWei, selectedPlan);
         }
         
       } else {
-        // Redeem flow - check claimable amount
-        console.log('[DEBUG] Redeem flow - checking claimable amount:', {
-          summaryClaimable: summary?.claimable?.toString() || 'undefined',
-          amountWei: amountWei.toString(),
-          claimableFormatted: summary?.claimable ? fromWei(summary.claimable as bigint) : 'N/A',
-          amountFormatted: fromWei(amountWei)
-        });
-        
         if (summary?.claimable && amountWei > (summary.claimable as bigint)) {
           notify.warning('Insufficient Claimable', `You can only claim up to ${fromWei(summary.claimable as bigint)} PLAY`);
           return;
@@ -510,11 +398,9 @@ export default function PrizeProgramPage() {
           return;
         }
         
-        console.log('[DEBUG] Executing claim transaction with amount:', amountWei.toString());
         claimRewards(amountWei);
       }
     } catch (error: any) {
-      console.error('[ERROR] Transaction failed:', error);
       notify.error(
         'Transaction Failed', 
         error.message || 'Failed to complete transaction. Please try again.'
@@ -535,7 +421,8 @@ export default function PrizeProgramPage() {
         default: percentage = 1; break;
       }
       
-      const adjustedAmount = BigInt(Math.floor(Number(fullBalance) * percentage));
+      // Use BigInt arithmetic to maintain precision
+      const adjustedAmount = (fullBalance * BigInt(Math.floor(percentage * 1000))) / 1000n;
       setAmount(fromWei(adjustedAmount));
     } else {
       // Use exact claimable amount for redeem without rounding
@@ -550,18 +437,13 @@ export default function PrizeProgramPage() {
 
   const handleMoveWarmUp = async () => {
     try {
-      console.log('[DEBUG] Moving warm-up tokens to active pool...');
-      
-      // Check if user has warm-up tokens
       if (!summary?.warmupAmount || summary.warmupAmount <= 0n) {
         notify.warning('No Warm-up Tokens', 'You don\'t have any warm-up tokens to activate.');
         return;
       }
       
-      console.log('[DEBUG] Warm-up amount:', summary.warmupAmount.toString());
       moveWarmUpToActivePool();
     } catch (error: any) {
-      console.error('[ERROR] Move warm-up failed:', error);
       notify.error('Move Failed', error.message || 'Failed to move warm-up tokens. Please try again.');
     }
   };
@@ -611,19 +493,6 @@ export default function PrizeProgramPage() {
               disabled={isDepositPending || isClaimPending || isAllowancePending || !amount || (pendingDepositAmount !== null)}
             >
               {(() => {
-                // Debug button state
-                console.log('[DEBUG] Button state:', {
-                  isAllowancePending,
-                  pendingDepositAmount: pendingDepositAmount?.toString() || 'null',
-                  isDepositPending,
-                  isClaimPending,
-                  allowanceReceiptStatus: allowanceReceipt ? {
-                    isSuccess: allowanceReceipt.isSuccess,
-                    isError: allowanceReceipt.isError,
-                    isPending: allowanceReceipt.isPending
-                  } : 'null'
-                });
-                
                 if (isAllowancePending) {
                   return (
                     <>
@@ -753,7 +622,7 @@ export default function PrizeProgramPage() {
               Next Rebase
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-center font-mono">
+          <CardContent className="text-center font-mono px-9">
             <CountdownClock seconds={summary?.countdownSec} />
           </CardContent>
         </Card>
@@ -845,8 +714,13 @@ export default function PrizeProgramPage() {
             </Button>
           </CardHeader>
           <CardContent className="text-center font-mono">
-            <div className="text-2xl font-bold font-mono">
-              Warmup: {formatPlayAmount(summary?.warmupAmount || 0n)} PLAY
+            <div className="space-y-1">
+              <div className="text-2xl font-bold font-mono">
+                Warmup: {formatPlayAmount(summary?.warmupAmount || 0n)} PLAY
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Unlockable: {Number(fromWei((unlockableWarmUp as bigint) || 0n)).toFixed(4)} PLAY
+              </div>
             </div>
           </CardContent>
         </Card>
