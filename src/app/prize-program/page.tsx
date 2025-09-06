@@ -753,7 +753,7 @@ export default function PrizeProgramPage() {
               </div>
             </div>
           </CardContent>
-          <CardFooter className="flex justify-end">
+          <CardFooter className="flex justify-end" style={{ visibility: 'hidden' }}>
             <Button
               onClick={() => claimRewards((summary?.claimable as bigint) || 0n)}
               disabled={isClaimPending || !summary?.claimable || (summary.claimable as bigint) <= 0n}

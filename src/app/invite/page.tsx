@@ -240,25 +240,7 @@ export default function InviteProgramPage() {
     return <PageLoader message="Checking authentication..." />;
   }
 
-  // Debug the calculation values (moved to avoid hook order issues)
-  useEffect(() => {
-    if (userTotals && Array.isArray(userTotals)) {
-      const cap2xMax = userTotals[3] as bigint;
-      const referralReceived = userTotals[5] as bigint;
-      const remainingReferralCap = cap2xMax > referralReceived ? cap2xMax - referralReceived : 0n;
-      
-      console.log('[DEBUG] Remaining Cap Calculation:', {
-        cap2xMax: cap2xMax.toString(),
-        referralReceived: referralReceived.toString(),
-        remainingReferralCap: remainingReferralCap.toString(),
-        remainingReferralCapPLAY: Number(fromWei(remainingReferralCap)).toFixed(4),
-        price: price?.toString() || 'undefined',
-        priceNumber: Number(price || 0),
-        calculatedUSD: Number(fromWei(remainingReferralCap)) * Number(price || 0),
-        formattedUSD: formatUSD(Number(fromWei(remainingReferralCap)) * Number(price || 0))
-      });
-    }
-  }, [userTotals, price]);
+
 
   // Unlock thresholds with filtered data
   const unlockThresholds = Array.from({ length: 15 }, (_, i) => ({
@@ -307,7 +289,7 @@ export default function InviteProgramPage() {
                   Loading...
                 </div>
               ) : (
-                `${fromWei(burned || 0n)} PLAY`
+                `${Number(fromWei(burned || 0n)).toFixed(4)} PLAY`
               )}
             </div>
           </CardContent>
@@ -327,7 +309,7 @@ export default function InviteProgramPage() {
                   Loading...
                 </div>
               ) : (
-                `${fromWei((pendingRewards as bigint) || 0n)} PLAY`
+                `${Number(fromWei((pendingRewards as bigint) || 0n)).toFixed(4)} PLAY`
               )}
             </div>
           </CardContent>
@@ -364,7 +346,7 @@ export default function InviteProgramPage() {
                   Loading...
                 </div>
               ) : (
-                `${fromWei((totalReferralReceived as bigint) || 0n)} PLAY`
+                `${Number(fromWei((totalReferralReceived as bigint) || 0n)).toFixed(4)} PLAY`
               )}
             </div>
           </CardContent>
