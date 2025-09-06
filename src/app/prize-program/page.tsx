@@ -93,7 +93,7 @@ function CountdownClock({ seconds }: CountdownClockProps) {
   const remainingSeconds = totalSeconds % 60;
 
   return (
-    <div className='flex items-center justify-center gap-0.5 font-mono text-2xl'>
+    <div className='flex items-center justify-center gap-2 font-mono text-2xl'>
       {hours > 0 && (
         <>
           <SlidingNumber value={hours} padStart={true} />
@@ -524,8 +524,19 @@ export default function PrizeProgramPage() {
 
   const handleMax = () => {
     if (mode === 'burn') {
-      // Use balance for deposit
-      setAmount(Number(fromWei(balance as bigint || 0n)).toFixed(4));
+      // Apply plan-specific percentages for stake
+      const fullBalance = balance as bigint || 0n;
+      let percentage: number;
+      
+      switch (selectedPlan) {
+        case 0: percentage = 0.975; break; // 97.5%
+        case 1: percentage = 0.952; break; // 95.2%
+        case 2: percentage = 0.93; break;  // 93%
+        default: percentage = 1; break;
+      }
+      
+      const adjustedAmount = BigInt(Math.floor(Number(fullBalance) * percentage));
+      setAmount(fromWei(adjustedAmount));
     } else {
       // Use exact claimable amount for redeem without rounding
       const claimableAmount = summary?.claimable as bigint || 0n;
@@ -865,20 +876,17 @@ export default function PrizeProgramPage() {
                 )}
               </div>
               {unlockDate && (
-                <div className="flex flex-col items-center justify-center gap-1 text-sm">
+                <div className="flex flex-col items-center justify-center gap-2 text-sm">
                   <Calendar className="w-4 h-4 text-muted-foreground" />
                   <span className="font-medium">
                     {isUnlocked ? 'Unlocked on:' : 'Unlock date:'}
                   </span>
-                  <span className="text-muted-foreground">
+                  <span className="text-muted-foreground text-center">
                     {unlockDate.toLocaleDateString('en-US', {
                       month: 'short',
                       day: 'numeric',
                       year: 'numeric'
-                    })}
-                  </span>
-                  <span className="text-muted-foreground text-xs">
-                    {unlockDate.toLocaleTimeString('en-US', {
+                    })} {unlockDate.toLocaleTimeString('en-US', {
                       hour: '2-digit',
                       minute: '2-digit',
                       hour12: true
