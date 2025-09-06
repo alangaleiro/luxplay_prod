@@ -23,7 +23,7 @@ import {
   useUserInfo,
   useViewUserTotals,
   useTotalActive,
-  useViewMyPrincipalLock
+  useViewPrincipalLock
 } from '../../../hooks/useActivePool';
 import { useFormattedPrice } from '../../../hooks/useOracle';
 import { useTokenBalance, useEnsureAllowance, useTokenApprove } from '../../../hooks/useToken';
@@ -130,9 +130,9 @@ export default function PrizeProgramPage() {
   const { data: userInfo, refetch: refetchUserInfo } = useUserInfo(address);
   const { data: userTotals, refetch: refetchUserTotals } = useViewUserTotals(address);
   const { data: totalActive, isLoading: isTotalActiveLoading, error: totalActiveError } = useTotalActive();
-  const { data: principalLockData } = useViewMyPrincipalLock();
+  const { data: principalLockData } = useViewPrincipalLock(address);
   
-  // Extract unlock status and date from viewMyPrincipalLock
+  // Extract unlock status and date from viewPrincipalLock
   // Array structure: [plan, since, lockSeconds, unlockAt, nowTs, remaining, unlockedNow]
   const isUnlocked = principalLockData && Array.isArray(principalLockData) ? principalLockData[6] : false;
   const unlockAt = principalLockData && Array.isArray(principalLockData) ? principalLockData[3] : null;

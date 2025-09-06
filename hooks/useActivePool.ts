@@ -641,6 +641,50 @@ export function usePlanLock(plan: number) {
   });
 }
 
+// viewPrincipalLock - requires address parameter
+export function useViewPrincipalLock(userAddress?: `0x${string}`) {
+  const result = useReadContract({
+    address: CONTRACT_ADDRESSES.ACTIVE_POOL,
+    abi: activePoolAbi,
+    functionName: 'viewPrincipalLock',
+    args: userAddress ? [userAddress] : undefined,
+    query: {
+      enabled: !!userAddress,
+      refetchInterval: 5000,
+      retry: (failureCount, error) => {
+        if (failureCount < 3) {
+          console.warn(`[WARN] useViewPrincipalLock retry ${failureCount + 1}/3:`, error?.message);
+          return true;
+        }
+        return false;
+      },
+    }
+  });
+
+  // Enhanced debug logging
+  console.log('[DEBUG] useViewPrincipalLock DETAILED:', {
+    contractAddress: CONTRACT_ADDRESSES.ACTIVE_POOL,
+    userAddress: userAddress ? `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}` : 'undefined',
+    functionName: 'viewPrincipalLock',
+    enabled: !!userAddress,
+    result: {
+      data: result.data,
+      dataType: typeof result.data,
+      isArray: Array.isArray(result.data),
+      arrayLength: Array.isArray(result.data) ? result.data.length : 'N/A',
+      arrayValues: Array.isArray(result.data) ? result.data.map((v, i) => `[${i}]: ${v?.toString()}`) : 'N/A',
+      isLoading: result.isLoading,
+      isError: result.isError,
+      isSuccess: result.isSuccess,
+      error: result.error,
+      status: result.status,
+      fetchStatus: result.fetchStatus
+    }
+  });
+
+  return result;
+}
+
 // viewMyPrincipalLock - no address parameter needed
 export function useViewMyPrincipalLock() {
   const { address } = useAccount();
@@ -659,27 +703,6 @@ export function useViewMyPrincipalLock() {
         }
         return false;
       },
-    }
-  });
-
-  // Enhanced debug logging
-  console.log('[DEBUG] useViewMyPrincipalLock DETAILED:', {
-    contractAddress: CONTRACT_ADDRESSES.ACTIVE_POOL,
-    userAddress: address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'undefined',
-    functionName: 'viewMyPrincipalLock',
-    enabled: !!address,
-    result: {
-      data: result.data,
-      dataType: typeof result.data,
-      isArray: Array.isArray(result.data),
-      arrayLength: Array.isArray(result.data) ? result.data.length : 'N/A',
-      arrayValues: Array.isArray(result.data) ? result.data.map((v, i) => `[${i}]: ${v?.toString()}`) : 'N/A',
-      isLoading: result.isLoading,
-      isError: result.isError,
-      isSuccess: result.isSuccess,
-      error: result.error,
-      status: result.status,
-      fetchStatus: result.fetchStatus
     }
   });
 
