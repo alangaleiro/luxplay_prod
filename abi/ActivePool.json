@@ -767,7 +767,7 @@
 			},
 			{
 				"internalType": "address",
-				"name": "_lgnxToken",
+				"name": "_playToken",
 				"type": "address"
 			},
 			{
@@ -823,19 +823,6 @@
 				"internalType": "uint256",
 				"name": "",
 				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "lgnxToken",
-		"outputs": [
-			{
-				"internalType": "contract ILonginuX",
-				"name": "",
-				"type": "address"
 			}
 		],
 		"stateMutability": "view",
@@ -937,6 +924,19 @@
 				"internalType": "uint32",
 				"name": "",
 				"type": "uint32"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "playToken",
+		"outputs": [
+			{
+				"internalType": "contract IPlayToken",
+				"name": "",
+				"type": "address"
 			}
 		],
 		"stateMutability": "view",
@@ -1195,13 +1195,19 @@
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "newLgnxToken",
+				"name": "user",
 				"type": "address"
 			}
 		],
-		"name": "setLgnxToken",
-		"outputs": [],
-		"stateMutability": "nonpayable",
+		"name": "secondsUntilPrincipalUnlock",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -1223,6 +1229,37 @@
 			}
 		],
 		"name": "setPlanFees",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint8",
+				"name": "plan",
+				"type": "uint8"
+			},
+			{
+				"internalType": "uint32",
+				"name": "seconds_",
+				"type": "uint32"
+			}
+		],
+		"name": "setPlanLock",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newPlayToken",
+				"type": "address"
+			}
+		],
+		"name": "setPlayToken",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -1624,6 +1661,49 @@
 		"type": "function"
 	},
 	{
+		"inputs": [],
+		"name": "viewMyPrincipalLock",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "plan",
+				"type": "uint8"
+			},
+			{
+				"internalType": "uint64",
+				"name": "since",
+				"type": "uint64"
+			},
+			{
+				"internalType": "uint32",
+				"name": "lockSeconds",
+				"type": "uint32"
+			},
+			{
+				"internalType": "uint256",
+				"name": "unlockAt",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "nowTs",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "remaining",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "unlockedNow",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"inputs": [
 			{
 				"internalType": "address",
@@ -1637,6 +1717,55 @@
 				"internalType": "uint256",
 				"name": "",
 				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "user",
+				"type": "address"
+			}
+		],
+		"name": "viewPrincipalLock",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "plan",
+				"type": "uint8"
+			},
+			{
+				"internalType": "uint64",
+				"name": "since",
+				"type": "uint64"
+			},
+			{
+				"internalType": "uint32",
+				"name": "lockSeconds",
+				"type": "uint32"
+			},
+			{
+				"internalType": "uint256",
+				"name": "unlockAt",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "nowTs",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "remaining",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "unlockedNow",
+				"type": "bool"
 			}
 		],
 		"stateMutability": "view",
@@ -1775,29 +1904,6 @@
 			}
 		],
 		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "user",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint8",
-				"name": "plan",
-				"type": "uint8"
-			}
-		],
-		"name": "voucherCreditActive",
-		"outputs": [],
-		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{

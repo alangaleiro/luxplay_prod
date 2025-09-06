@@ -22,7 +22,8 @@ import {
   useMoveWarmUpToActivePool,
   useUserInfo,
   useViewUserTotals,
-  useTotalActive
+  useTotalActive,
+  useViewMyPrincipalLock
 } from '../../../hooks/useActivePool';
 import { useFormattedPrice } from '../../../hooks/useOracle';
 import { useTokenBalance, useEnsureAllowance, useTokenApprove } from '../../../hooks/useToken';
@@ -54,7 +55,8 @@ import {
   Coins,
   Wallet,
   Lock,
-  Unlock
+  Unlock,
+  Calendar
 } from 'lucide-react';
 
 interface CountdownClockProps {
@@ -128,6 +130,26 @@ export default function PrizeProgramPage() {
   const { data: userInfo, refetch: refetchUserInfo } = useUserInfo(address);
   const { data: userTotals, refetch: refetchUserTotals } = useViewUserTotals(address);
   const { data: totalActive, isLoading: isTotalActiveLoading, error: totalActiveError } = useTotalActive();
+  const { data: principalLockData } = useViewMyPrincipalLock();
+  
+  // Extract unlock status and date from viewMyPrincipalLock
+  // Array structure: [plan, since, lockSeconds, unlockAt, nowTs, remaining, unlockedNow]
+  const isUnlocked = principalLockData && Array.isArray(principalLockData) ? principalLockData[6] : false;
+  const unlockAt = principalLockData && Array.isArray(principalLockData) ? principalLockData[3] : null;
+  // Convert unlockAt timestamp to JavaScript Date object
+  const unlockDate = unlockAt && Number(unlockAt) > 0 ? new Date(Number(unlockAt) * 1000) : null;
+  
+  // Debug Plan Lock data
+  useEffect(() => {
+    console.log('[DEBUG] Plan Lock viewPrincipalLock data:', {
+      address: address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'undefined',
+      principalLockData,
+      isUnlocked,
+      unlockAt: unlockAt?.toString(),
+      unlockDate: unlockDate?.toISOString(),
+      currentTime: new Date().toISOString()
+    });
+  }, [address, principalLockData, isUnlocked, unlockAt, unlockDate]);
   
   const refetchSummary = async () => {
     try {
@@ -471,12 +493,24 @@ export default function PrizeProgramPage() {
         
       } else {
         // Redeem flow - check claimable amount
+        console.log('[DEBUG] Redeem flow - checking claimable amount:', {
+          summaryClaimable: summary?.claimable?.toString() || 'undefined',
+          amountWei: amountWei.toString(),
+          claimableFormatted: summary?.claimable ? fromWei(summary.claimable as bigint) : 'N/A',
+          amountFormatted: fromWei(amountWei)
+        });
+        
         if (summary?.claimable && amountWei > (summary.claimable as bigint)) {
           notify.warning('Insufficient Claimable', `You can only claim up to ${fromWei(summary.claimable as bigint)} PLAY`);
           return;
         }
         
-        console.log('[DEBUG] Executing claim transaction...');
+        if (!summary?.claimable || (summary.claimable as bigint) <= 0n) {
+          notify.warning('No Claimable Amount', 'You don\'t have any rewards to claim.');
+          return;
+        }
+        
+        console.log('[DEBUG] Executing claim transaction with amount:', amountWei.toString());
         claimRewards(amountWei);
       }
     } catch (error: any) {
@@ -814,10 +848,10 @@ export default function PrizeProgramPage() {
               Plan Lock
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-center font-mono">
-            <div className="space-y-2">
+          <CardContent className="text-center">
+            <div className="space-y-3">
               <div className="flex items-center justify-center gap-2">
-                {userInfo && Array.isArray(userInfo) && userInfo[8] ? (
+                {isUnlocked ? (
                   <>
                     <Unlock className="w-5 h-5 text-green-500" />
                     <span className="text-green-500 font-bold">Unlocked</span>
@@ -829,19 +863,31 @@ export default function PrizeProgramPage() {
                   </>
                 )}
               </div>
-              {userInfo && Array.isArray(userInfo) && userInfo[9] && (
+              {unlockDate && (
+                <div className="flex flex-col items-center justify-center gap-1 text-sm">
+                  <Calendar className="w-4 h-4 text-muted-foreground" />
+                  <span className="font-medium">
+                    {isUnlocked ? 'Unlocked on:' : 'Unlock date:'}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {unlockDate.toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric'
+                    })}
+                  </span>
+                  <span className="text-muted-foreground text-xs">
+                    {unlockDate.toLocaleTimeString('en-US', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: true
+                    })}
+                  </span>
+                </div>
+              )}
+              {!unlockDate && principalLockData && (
                 <div className="text-sm text-muted-foreground">
-                  {console.log('[DEBUG] Plan Lock data:', {
-                    unlocked: userInfo[8],
-                    unlockAt: userInfo[9],
-                    unlockAtNumber: Number(userInfo[9]),
-                    date: new Date(Number(userInfo[9]) * 1000)
-                  })}
-                  Unlock: {new Date(Number(userInfo[9]) * 1000).toLocaleDateString('en-US', {
-                    month: '2-digit',
-                    day: '2-digit',
-                    year: '2-digit'
-                  })}
+                  No lock period
                 </div>
               )}
             </div>
