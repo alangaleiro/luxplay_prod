@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 
 // Import hooks
-import { useFormattedPrice } from '../../../hooks/useOracle';
 import { useNotify } from '../../../hooks/useStore';
 import { 
   usePlaySwap, 
@@ -53,9 +52,6 @@ export default function SwapPage() {
   // Store
   const notify = useNotify();
 
-  // Contract data
-  const { price: tokenPriceUSD } = useFormattedPrice();
-  
   // PlaySwap hooks
   const playSwap = usePlaySwap();
   const usdtBalance = useUSDTBalance(address);
@@ -222,9 +218,9 @@ export default function SwapPage() {
           </Card>
         )}
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="space-y-6">
           {/* Main Swap Interface */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="space-y-6">
             {/* Swap Card */}
             <Card>
               <CardHeader>
@@ -431,53 +427,6 @@ export default function SwapPage() {
                 </CardContent>
               </Card>
             )}
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Token Prices */}
-            <Card>
-              <CardHeader>
-                <CardTitle>
-                  Token Prices
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white text-sm font-bold">
-                      P
-                    </div>
-                    <div>
-                      <p className="font-medium">PLAY</p>
-                      <p className="text-xs text-muted-foreground">Play Token</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold">{formatUSD(tokenPriceUSD)}</p>
-                    <p className="text-xs text-muted-foreground">USD</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                      T
-                    </div>
-                    <div>
-                      <p className="font-medium">USDT</p>
-                      <p className="text-xs text-muted-foreground">Tether USD</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold">$1.00</p>
-                    <p className="text-xs text-muted-foreground">~</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            
           </div>
         </div>
 
