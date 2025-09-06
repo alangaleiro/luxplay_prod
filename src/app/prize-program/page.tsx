@@ -527,8 +527,9 @@ export default function PrizeProgramPage() {
       // Use balance for deposit
       setAmount(Number(fromWei(balance as bigint || 0n)).toFixed(4));
     } else {
-      // Use claimable for redeem
-      setAmount(Number(fromWei(summary?.claimable as bigint || 0n)).toFixed(4));
+      // Use exact claimable amount for redeem without rounding
+      const claimableAmount = summary?.claimable as bigint || 0n;
+      setAmount(fromWei(claimableAmount));
     }
   };
 

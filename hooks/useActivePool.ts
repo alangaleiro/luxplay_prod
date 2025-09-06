@@ -373,6 +373,29 @@ export function useClaimReferralRewards() {
   };
 }
 
+export function useStakeReferralRewards() {
+  const { writeContract, data: hash, isPending, error } = useWriteContract();
+  const receipt = useWaitForTransactionReceipt({ hash });
+
+  const stakeReferralRewards = (amount: bigint) => {
+    writeContract({
+      address: CONTRACT_ADDRESSES.ACTIVE_POOL,
+      abi: activePoolAbi,
+      functionName: 'stakeReferralRewards',
+      args: [amount],
+      gas: 5000000n, // Set explicit gas limit
+    });
+  };
+
+  return {
+    stakeReferralRewards,
+    hash,
+    isPending,
+    error,
+    receipt,
+  };
+}
+
 export function useUpgradePlan() {
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const receipt = useWaitForTransactionReceipt({ hash });
@@ -587,6 +610,77 @@ export function useViewDownlineActiveCount(userAddress?: `0x${string}`) {
     error: result.error?.message || 'none',
     status: result.status,
     contractAddress: CONTRACT_ADDRESSES.ACTIVE_POOL
+  });
+
+  return result;
+}
+
+// Plan Lock hooks - using available functions
+export function usePrincipalActiveSince(userAddress?: `0x${string}`) {
+  return useReadContract({
+    address: CONTRACT_ADDRESSES.ACTIVE_POOL,
+    abi: activePoolAbi,
+    functionName: 'principalActiveSince',
+    args: userAddress ? [userAddress] : undefined,
+    query: {
+      enabled: !!userAddress,
+      refetchInterval: 5000,
+    }
+  });
+}
+
+export function usePlanLock(plan: number) {
+  return useReadContract({
+    address: CONTRACT_ADDRESSES.ACTIVE_POOL,
+    abi: activePoolAbi,
+    functionName: 'planLock',
+    args: [plan],
+    query: {
+      refetchInterval: 5000,
+    }
+  });
+}
+
+// viewMyPrincipalLock - no address parameter needed
+export function useViewMyPrincipalLock() {
+  const { address } = useAccount();
+  
+  const result = useReadContract({
+    address: CONTRACT_ADDRESSES.ACTIVE_POOL,
+    abi: activePoolAbi,
+    functionName: 'viewMyPrincipalLock',
+    query: {
+      enabled: !!address,
+      refetchInterval: 5000,
+      retry: (failureCount, error) => {
+        if (failureCount < 3) {
+          console.warn(`[WARN] useViewMyPrincipalLock retry ${failureCount + 1}/3:`, error?.message);
+          return true;
+        }
+        return false;
+      },
+    }
+  });
+
+  // Enhanced debug logging
+  console.log('[DEBUG] useViewMyPrincipalLock DETAILED:', {
+    contractAddress: CONTRACT_ADDRESSES.ACTIVE_POOL,
+    userAddress: address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'undefined',
+    functionName: 'viewMyPrincipalLock',
+    enabled: !!address,
+    result: {
+      data: result.data,
+      dataType: typeof result.data,
+      isArray: Array.isArray(result.data),
+      arrayLength: Array.isArray(result.data) ? result.data.length : 'N/A',
+      arrayValues: Array.isArray(result.data) ? result.data.map((v, i) => `[${i}]: ${v?.toString()}`) : 'N/A',
+      isLoading: result.isLoading,
+      isError: result.isError,
+      isSuccess: result.isSuccess,
+      error: result.error,
+      status: result.status,
+      fetchStatus: result.fetchStatus
+    }
   });
 
   return result;

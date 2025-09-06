@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 // Import hooks
 import { 
   useClaimReferralRewards,
+  useStakeReferralRewards,
   useUserInfo,
   useReferralPendingReward,
   useViewUserTotals,
@@ -57,6 +58,12 @@ export default function InviteProgramPage() {
     isPending: isClaimPending,
     receipt: claimReceipt
   } = useClaimReferralRewards();
+
+  const { 
+    stakeReferralRewards, 
+    isPending: isStakePending,
+    receipt: stakeReceipt
+  } = useStakeReferralRewards();
 
   const { 
     data: userInfo, 
@@ -182,12 +189,35 @@ export default function InviteProgramPage() {
     }
   }, [claimReceipt?.isError, notify]);
 
+  // Handle successful stake
+  useEffect(() => {
+    if (stakeReceipt?.isSuccess) {
+      notify.success('Stake Successful', 'Your referral rewards have been staked');
+    }
+  }, [stakeReceipt?.isSuccess, notify]);
+
+  // Handle stake error
+  useEffect(() => {
+    if (stakeReceipt?.isError) {
+      notify.error('Stake Failed', 'Failed to stake referral rewards');
+    }
+  }, [stakeReceipt?.isError, notify]);
+
   const handleClaim = () => {
     const available = (pendingRewards as bigint) || 0n;
     if (available > 0n) {
       claimReferralRewards(available);
     } else {
       notify.warning('No Rewards', 'You have no available referral rewards to claim');
+    }
+  };
+
+  const handleStake = () => {
+    const available = (pendingRewards as bigint) || 0n;
+    if (available > 0n) {
+      stakeReferralRewards(available);
+    } else {
+      notify.warning('No Rewards', 'You have no available referral rewards to stake');
     }
   };
 
@@ -313,7 +343,22 @@ export default function InviteProgramPage() {
               )}
             </div>
           </CardContent>
-          <CardFooter className="flex justify-end">
+          <CardFooter className="flex justify-between">
+            <Button 
+              onClick={handleStake}
+              disabled={isStakePending || !pendingRewards || (pendingRewards as bigint) <= 0n}
+              variant="outline"
+              size="sm"
+            >
+              {isStakePending ? (
+                <>
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current mr-1"></div>
+                  Staking...
+                </>
+              ) : (
+                'Stake'
+              )}
+            </Button>
             <Button 
               onClick={handleClaim}
               disabled={isClaimPending || !pendingRewards || (pendingRewards as bigint) <= 0n}
